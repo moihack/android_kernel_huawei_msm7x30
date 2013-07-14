@@ -232,6 +232,7 @@ struct msm_battery_info {
 	u32 is_charging;
 
 	u32(*calculate_capacity) (u32 voltage, u32 full_voltage);
+	bool(*is_charger_valid) (void);
 
 	s32 batt_handle;
 
@@ -718,6 +719,20 @@ static void msm_batt_update_psy_status(void)
 
 		if (!supp)
 			supp = msm_batt_info.current_ps;
+	}
+
+	/* Sometimes the target is referred to as charging is VBUS
+	 * is on. On these targets, OTG function will show as if the target
+	 * is charging, reporting wrong information.
+	 */
+	if (msm_batt_info.is_charger_valid) {
+		if (!msm_batt_info.is_charger_valid()) {
+			DBG_LIMIT("BATT: No charging (not valid).\n");
+			charger_status = CHARGER_STATUS_INVALID;
+			msm_batt_info.batt_status =
+				POWER_SUPPLY_STATUS_NOT_CHARGING;
+			supp = &msm_psy_batt;
+		}
 	}
 
 	if (supp) {
@@ -1457,6 +1472,7 @@ static int __devinit msm_batt_probe(struct platform_device *pdev)
 
 	msm_batt_info.batt_technology = pdata->batt_technology;
 	msm_batt_info.calculate_capacity = pdata->calculate_capacity;
+	msm_batt_info.is_charger_valid = pdata->is_charger_valid;
 
 	if (!msm_batt_info.voltage_min_design)
 		msm_batt_info.voltage_min_design = BATTERY_LOW;

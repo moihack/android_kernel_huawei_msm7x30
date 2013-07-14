@@ -25,6 +25,7 @@ struct msm_psy_batt_pdata {
 	u32 avail_chg_sources;
 	u32 batt_technology;
 	u32 (*calculate_capacity)(u32 voltage, u32 full_voltage);
+	bool (*is_charger_valid)(void);
 };
 
 #endif
