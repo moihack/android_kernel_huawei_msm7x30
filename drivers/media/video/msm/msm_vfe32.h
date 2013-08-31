@@ -1021,12 +1021,6 @@ struct vfe_cmd_stats_buf {
 	uint32_t statsBuf[VFE_STATS_BUFFER_COUNT];
 };
 
-#define VIDIOC_MSM_AXI_INIT \
-	_IOWR('V', BASE_VIDIOC_PRIVATE + 18, struct msm_cam_media_controller *)
-
-#define VIDIOC_MSM_AXI_RELEASE \
-	_IOWR('V', BASE_VIDIOC_PRIVATE + 19, struct msm_cam_media_controller *)
-
 #define VIDIOC_MSM_AXI_CFG \
 	_IOWR('V', BASE_VIDIOC_PRIVATE + 20, void *)
 
