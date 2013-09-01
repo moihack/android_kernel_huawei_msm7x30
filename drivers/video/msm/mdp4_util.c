@@ -257,6 +257,13 @@ void mdp4_display_intf_sel(int output, ulong intf)
 			MSM_FB_INFO("%s: Illegal INTF selected, output=%d \
 				intf=%d\n", __func__, output, (int)intf);
 		}
+	} else if (intf == MDDI_INTF) {
+		data = 0x80;	/* bit 7 */
+		intf = MDDI_INTF;
+		if (output == EXTERNAL_INTF_SEL) {
+			MSM_FB_INFO("%s: Illegal INTF selected, output=%d \
+				intf=%d\n", __func__, output, (int)intf);
+		}
 	} else
 		data = 0;
 
@@ -560,14 +567,9 @@ irqreturn_t mdp4_isr(int irq, void *ptr)
 			mdp4_dmap_done_dsi_video(0);
 		else if (panel & MDP4_PANEL_DSI_CMD)
 			mdp4_dmap_done_dsi_cmd(0);
-#else
-		else { /* MDDI */
-			mdp4_dma_p_done_mddi(dma);
-			mdp_pipe_ctrl(MDP_DMA2_BLOCK,
-				MDP_BLOCK_POWER_OFF, TRUE);
-			complete(&dma->comp);
-		}
 #endif
+		else if (panel & MDP4_PANEL_MDDI)
+			mdp4_dmap_done_mddi(0);
 #else
 		else {
 			spin_lock(&mdp_spin_lock);
@@ -579,11 +581,7 @@ irqreturn_t mdp4_isr(int irq, void *ptr)
 	}
 	if (isr & INTR_DMA_S_DONE) {
 		mdp4_stat.intr_dma_s++;
-#if defined(CONFIG_FB_MSM_OVERLAY) && defined(CONFIG_FB_MSM_MDDI)
-		dma = &dma2_data;
-#else
 		dma = &dma_s_data;
-#endif
 
 		dma->busy = FALSE;
 		mdp_pipe_ctrl(MDP_DMA_S_BLOCK,
@@ -611,10 +609,9 @@ irqreturn_t mdp4_isr(int irq, void *ptr)
 #ifdef CONFIG_FB_MSM_MIPI_DSI
 			if (panel & MDP4_PANEL_DSI_CMD)
 				mdp4_overlay0_done_dsi_cmd(0);
-#else
-			if (panel & MDP4_PANEL_MDDI)
-				mdp4_overlay0_done_mddi(dma);
 #endif
+			if (panel & MDP4_PANEL_MDDI)
+				mdp4_overlay0_done_mddi(0);
 		}
 		mdp_hw_cursor_done();
 	}
