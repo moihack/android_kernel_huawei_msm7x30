@@ -3024,6 +3024,11 @@ static int mdp_probe(struct platform_device *pdev)
 		INIT_WORK(&mfd->dma_update_worker,
 			mdp_lcd_update_workqueue_handler);
 #endif
+		if (mdp_pdata)
+			mfd->vsync_gpio = mdp_pdata->gpio;
+		else
+			mfd->vsync_gpio = -1;
+
 		mdp_config_vsync(mdp_init_pdev, mfd);
 		break;
 
