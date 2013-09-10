@@ -22,7 +22,6 @@
 #include <linux/semaphore.h>
 #include <linux/spinlock.h>
 #include <linux/fb.h>
-#include <linux/gpio.h>
 #include <asm/system.h>
 #include <asm/mach-types.h>
 #include <mach/hardware.h>
@@ -30,6 +29,8 @@
 #include "mdp.h"
 #include "msm_fb.h"
 #include "mdp4.h"
+
+static int vsync_start_y_adjust = 4;
 
 #define MAX_CONTROLLER	1
 
@@ -69,8 +70,6 @@ static struct vsycn_ctrl {
 	struct mdp4_overlay_pipe *base_pipe;
 	struct vsync_update vlist[2];
 	int vsync_enabled;
-	int channel_irq;
-	int channel_irq_enabled;
 	int clk_enabled;
 	int clk_control;
 	ktime_t vsync_time;
@@ -100,16 +99,6 @@ static void vsync_irq_disable(int intr, int term)
 	outp32(MDP_INTR_ENABLE, mdp_intr_mask);
 	mdp_disable_irq_nosync(term);
 	spin_unlock_irqrestore(&mdp_spin_lock, flag);
-}
-
-static void mdp_vsync_enable(struct vsycn_ctrl *vctrl, bool enable)
-{
-	if (enable && !vctrl->channel_irq_enabled)
-		enable_irq(vctrl->channel_irq);
-	else if (!enable && vctrl->channel_irq_enabled)
-		disable_irq(vctrl->channel_irq);
-
-	vctrl->channel_irq_enabled = enable;
 }
 
 static void mdp4_mddi_blt_ov_update(struct mdp4_overlay_pipe *pipe)
@@ -465,7 +454,8 @@ void mdp4_mddi_vsync_ctrl(struct fb_info *info, int enable)
 				ktime_to_ms(ktime_get()) - VSYNC_MIN_DIFF_MS;
 		}
 		if (clk_set_on) {
-			mdp_vsync_enable(vctrl, true);
+			vsync_irq_enable(INTR_PRIMARY_RDPTR,
+						MDP_PRIM_RDPTR_TERM);
 		}
 	} else {
 		spin_lock_irqsave(&vctrl->spin_lock, flags);
@@ -677,7 +667,7 @@ static void clk_ctrl_work(struct work_struct *work)
 	mutex_lock(&vctrl->update_lock);
 	spin_lock_irqsave(&vctrl->spin_lock, flags);
 	if (vctrl->clk_control && vctrl->clk_enabled) {
-		mdp_vsync_enable(vctrl, false);
+		vsync_irq_disable(INTR_PRIMARY_RDPTR, MDP_PRIM_RDPTR_TERM);
 		vctrl->clk_enabled = 0;
 		vctrl->clk_control = 0;
 		spin_unlock_irqrestore(&vctrl->spin_lock, flags);
@@ -726,12 +716,6 @@ ssize_t mdp4_mddi_show_event(struct device *dev,
 	return ret;
 }
 
-irqreturn_t mdp4_mddi_vsync_irq(int irq, void *data)
-{
-	primary_rdptr_isr(0);
-	return IRQ_HANDLED;
-}
-
 void mdp4_mddi_rdptr_init(int cndx)
 {
 	struct vsycn_ctrl *vctrl;
@@ -758,38 +742,64 @@ void mdp4_mddi_rdptr_init(int cndx)
 
 void mdp4_primary_rdptr(void)
 {
-	/* empty */
+	primary_rdptr_isr(0);
 }
 
 static void mdp4_mddi_vsync_enable(struct msm_fb_data_type *mfd,
 		struct mdp4_overlay_pipe *pipe, int which)
 {
-	struct vsycn_ctrl *vctrl;
-	static bool configured = false;
-	int err = 0;
+	uint32 data, tear_en;
 
-	if (configured || which != 0)
-		return;
+	tear_en = (1 << which);
 
-	err = gpio_request(mfd->vsync_gpio, "mdp_vsync");
-	if (err) {
-		pr_err("%s: unable to request gpio err=%d\n",
-			__func__, err);
-		return;
-	}
+	mdp_clk_ctrl(1);
 
-	vctrl = &vsync_ctrl_db[0];
-	vctrl->channel_irq =  gpio_to_irq(mfd->vsync_gpio);
-	vctrl->channel_irq_enabled = true;
-	err = request_irq(vctrl->channel_irq, mdp4_mddi_vsync_irq,
-		IRQF_TRIGGER_FALLING, "mdp_vsync", NULL);
-	if (err) {
-		pr_err("%s: unable to request vsync irq err=%d\n",
-			__func__, err);
-		return;
-	}
+	data = inpdw(MDP_BASE + 0x20c);
+	if ((mfd->use_mdp_vsync) && (mfd->ibuf.vsync_enable) &&
+	    (mfd->panel_info.lcd.vsync_enable)) {
+		data |= tear_en;
+		/*
+		 * rdptr init and irq cannot be same due to h/w bug.
+		 * if they are same, rdptr irqs could be missed.
+		 */
+		if (mfd->panel_info.lcd.primary_vsync_init ||
+			mfd->panel_info.lcd.primary_rdptr_irq) {
+			MDP_OUTP(MDP_BASE + 0x128,
+				mfd->panel_info.lcd.primary_vsync_init);
+			MDP_OUTP(MDP_BASE + 0x21C,
+				mfd->panel_info.lcd.primary_rdptr_irq);
+		} else {
+			MDP_OUTP(MDP_BASE + 0x128, 0);
+			MDP_OUTP(MDP_BASE + 0x21C, 1);
+		}
 
-	configured = true;
+		/*
+		 * adjust start position and threshold to make sure
+		 * write ptr follows read pts (TE is effective), and
+		 * at the same write is not throttled(shorter dmap
+		 * time)
+		 */
+		if (mfd->panel_info.lcd.primary_start_pos)
+			MDP_OUTP(MDP_BASE + 0x210,
+				mfd->panel_info.lcd.primary_start_pos);
+		else
+			MDP_OUTP(MDP_BASE + 0x210,
+				 mfd->panel_info.lcd.v_back_porch +
+				 mfd->panel_info.lcd.v_front_porch +
+				 vsync_start_y_adjust);
+
+		if (mfd->panel_info.lcd.vsync_threshold_continue &&
+				mfd->panel_info.lcd.vsync_threshold_start)
+			MDP_OUTP(MDP_BASE + 0x200,
+			 ((mfd->panel_info.lcd.vsync_threshold_continue << 16) |
+				mfd->panel_info.lcd.vsync_threshold_start));
+		else
+			MDP_OUTP(MDP_BASE + 0x200,
+			 ((4 << 16) | mfd->panel_info.lcd.v_pulse_width));
+	} else
+		data &= ~tear_en;
+	MDP_OUTP(MDP_BASE + 0x20c, data);
+	mdp_clk_ctrl(0);
 }
 
 void mdp4_mddi_free_base_pipe(struct msm_fb_data_type *mfd)
@@ -1046,7 +1056,7 @@ int mdp4_mddi_off(struct platform_device *pdev)
 	}
 
 	if (vctrl->vsync_enabled) {
-		mdp_vsync_enable(vctrl, false);
+		vsync_irq_disable(INTR_PRIMARY_RDPTR, MDP_PRIM_RDPTR_TERM);
 		vctrl->vsync_enabled = 0;
 	}
 
@@ -1121,7 +1131,7 @@ static int mdp4_mddi_clk_check(struct vsycn_ctrl *vctrl)
 	if (clk_set_on) {
 		pr_debug("%s: SET_CLK_ON\n", __func__);
 		mdp_clk_ctrl(1);
-		mdp_vsync_enable(vctrl, true);
+		vsync_irq_enable(INTR_PRIMARY_RDPTR, MDP_PRIM_RDPTR_TERM);
 	}
 
 	return 0;
