@@ -546,6 +546,73 @@ void mdp4_overlay_dmae_xy(struct mdp4_overlay_pipe *pipe)
 	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
 }
 
+void mdp4_overlay_dmas_cfg(struct msm_fb_data_type *mfd)
+{
+	uint32 dma_s_cfg_reg;
+
+	dma_s_cfg_reg = 0;
+
+	if (mfd->fb_imgType == MDP_BGR_565)
+		dma_s_cfg_reg |= DMA_PACK_PATTERN_BGR;
+	else
+		dma_s_cfg_reg |= DMA_PACK_PATTERN_RGB;
+
+#ifdef BLT_RGB565
+	dma_s_cfg_reg |= DMA_IBUF_FORMAT_RGB565;
+#endif
+
+	dma_s_cfg_reg |= DMA_DITHER_EN;
+
+	if (mfd->panel_info.bpp == 24) {
+		dma_s_cfg_reg |= DMA_DSTC0G_8BITS |	/* 666 18BPP */
+		    DMA_DSTC1B_8BITS | DMA_DSTC2R_8BITS;
+	} else if (mfd->panel_info.bpp == 18) {
+		dma_s_cfg_reg |= DMA_DSTC0G_6BITS |	/* 666 18BPP */
+		    DMA_DSTC1B_6BITS | DMA_DSTC2R_6BITS;
+	} else {
+		dma_s_cfg_reg |= DMA_DSTC0G_6BITS |	/* 565 16BPP */
+		    DMA_DSTC1B_5BITS | DMA_DSTC2R_5BITS;
+	}
+
+	/* MDP cmd block enable */
+	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_ON, FALSE);
+
+	MDP_OUTP(MDP_BASE + 0xa0000, dma_s_cfg_reg);
+
+	/* MDP cmd block disable */
+	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
+}
+
+void mdp4_overlay_dmas_xy(struct mdp4_overlay_pipe *pipe)
+{
+	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_ON, FALSE);
+
+	MDP_OUTP(MDP_BASE + 0xa0004,
+			(pipe->src_height << 16 | pipe->src_width));
+	if (pipe->dma_blt_addr) {
+		uint32 off, bpp;
+#ifdef BLT_RGB565
+		bpp = 2; /* overlay output is RGB565 */
+#else
+		bpp = 3; /* overlay output is RGB888 */
+#endif
+		off = 0;
+		if (pipe->ov_cnt & 0x01)
+			off = pipe->src_height * pipe->src_width * bpp;
+		MDP_OUTP(MDP_BASE + 0xa0008, pipe->dma_blt_addr + off);
+		/* RGB888, output of overlay blending */
+		MDP_OUTP(MDP_BASE + 0xa000c, pipe->src_width * bpp);
+	} else {
+		/* dma_s source */
+		MDP_OUTP(MDP_BASE + 0xa0008, pipe->srcp0_addr);
+		MDP_OUTP(MDP_BASE + 0xa000c, pipe->srcp0_ystride);
+	}
+	/* dma_s dest */
+	MDP_OUTP(MDP_BASE + 0xa0010, (pipe->dst_y << 16 | pipe->dst_x));
+
+	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
+}
+
 void mdp4_overlay_dmap_cfg(struct msm_fb_data_type *mfd, int lcdc)
 {
 	uint32	dma2_cfg_reg;
