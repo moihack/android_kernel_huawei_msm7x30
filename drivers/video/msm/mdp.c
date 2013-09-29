@@ -1515,9 +1515,7 @@ u32 mdp_get_panel_framerate(struct msm_fb_data_type *mfd)
 		frame_rate = panel_info->mipi.frame_rate;
 
 	if (mfd->dest == DISPLAY_LCD) {
-		if (panel_info->type == MDDI_PANEL && panel_info->mddi.is_type1)
-			frame_rate = panel_info->lcd.refx100 / (100 * 2);
-		else if (panel_info->type != MIPI_CMD_PANEL)
+		if (panel_info->type != MIPI_CMD_PANEL)
 			frame_rate = panel_info->lcd.refx100 / 100;
 	}
 	pr_debug("%s type=%d frame_rate=%d\n", __func__,
