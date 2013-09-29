@@ -1052,7 +1052,7 @@ void mdp4_mddi_pipe_queue(int cndx, struct mdp4_overlay_pipe *pipe);
 int mdp4_mddi_pipe_commit(int cndx, int wait);
 void mdp4_mddi_vsync_ctrl(struct fb_info *info, int enable);
 void mdp4_mddi_wait4vsync(int cndx);
-void mdp4_dmap_done_mddi(int cndx);
+void mdp4_dmas_done_mddi(int cndx);
 void mdp4_overlay0_done_mddi(int cndx);
 ssize_t mdp4_mddi_show_event(struct device *dev,
 		struct device_attribute *attr, char *buf);

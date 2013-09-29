@@ -3209,6 +3209,11 @@ int mdp4_overlay_mdp_perf_req(struct msm_fb_data_type *mfd)
 				ib_quota_min = min(ib_quota_min,
 						   pipe->bw_ib_quota);
 		}
+
+		if (mfd->mdp_rev == MDP_REV_40 &&
+			ctrl->panel_mode & MDP4_PANEL_MDDI)
+			perf_req->use_ov_blt[MDP4_MIXER0] = 1;
+
 		if (mfd->mdp_rev == MDP_REV_41) {
 			/*
 			 * writeback (blt) mode to provide work around
