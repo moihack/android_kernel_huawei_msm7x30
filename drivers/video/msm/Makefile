@@ -100,6 +100,10 @@ obj-$(CONFIG_FB_MSM_EBI2_TMD_QVGA_EPSON_QCIF) += ebi2_tmd20.o
 obj-$(CONFIG_FB_MSM_EBI2_TMD_QVGA_EPSON_QCIF) += ebi2_l2f.o
 
 ifeq ($(CONFIG_FB_MSM_MDDI_AUTO_DETECT),y)
+ifeq ($(CONFIG_MACH_HUAWEI_U8800),y)
+obj-y += mddi_nt35510_wvga.o
+obj-y += mddi_nt35582_wvga.o
+else
 obj-y += mddi_prism.o
 obj-y += mddi_toshiba.o
 obj-y += mddi_toshiba_vga.o
@@ -110,6 +114,7 @@ obj-y += mddi_orise.o
 obj-y += mddi_quickvx.o
 obj-y += mddi_nt35510_wvga.o
 obj-y += mddi_nt35582_wvga.o
+endif
 else
 obj-$(CONFIG_FB_MSM_MDDI_PRISM_WVGA) += mddi_prism.o
 obj-$(CONFIG_FB_MSM_MDDI_TOSHIBA_COMMON) += mddi_toshiba.o
