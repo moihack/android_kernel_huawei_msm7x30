@@ -2389,6 +2389,8 @@ static struct resource msm_v4l2_video_overlay_resources[] = {
 
 static int msm_fb_detect_panel(const char *name)
 {
+	if (!strcmp(name, "mddi_nt35510_wvga"))
+		return 0;
 	if (!strcmp(name, "mddi_nt35582_wvga"))
 		return 0;
 	return -ENODEV;
@@ -2576,7 +2578,7 @@ static struct platform_device qcedev_device = {
 };
 #endif
 
-static void mddi_nt35582_wvga_pwm_config(void)
+static void mddi_nt355xx_wvga_pwm_config(void)
 {
 	int err = 0;
 	struct pm8xxx_gpio_init_info lcd_pwm = {
@@ -2597,16 +2599,24 @@ static void mddi_nt35582_wvga_pwm_config(void)
 		pr_err("%s PMIC_GPIO_LCD_PWM config failed\n", __func__);
 }
 
-static struct mddi_panel_platform_data mddi_nt35582_wvga_pdata = {
+static struct mddi_panel_platform_data mddi_nt355xx_wvga_pdata = {
 	.pwm_channel = 1, /* LPG PMIC GPIO24 */
-	.pwm_config = mddi_nt35582_wvga_pwm_config,
+	.pwm_config = mddi_nt355xx_wvga_pwm_config,
+};
+
+static struct platform_device mddi_nt35510_wvga_device = {
+	.name	= "mddi_nt35510_wvga",
+	.id	= 0,
+	.dev	= {
+		.platform_data = &mddi_nt355xx_wvga_pdata,
+	},
 };
 
 static struct platform_device mddi_nt35582_wvga_device = {
 	.name	= "mddi_nt35582_wvga",
 	.id	= 0,
 	.dev	= {
-		.platform_data = &mddi_nt35582_wvga_pdata,
+		.platform_data = &mddi_nt355xx_wvga_pdata,
 	},
 };
 
@@ -3271,6 +3281,7 @@ static struct platform_device *devices[] __initdata = {
 	&msm_v4l2_video_overlay_device,
 #endif
 	&msm_migrate_pages_device,
+	&mddi_nt35510_wvga_device,
 	&mddi_nt35582_wvga_device,
 #ifdef CONFIG_MSM_ROTATOR
 	&msm_rotator_device,
