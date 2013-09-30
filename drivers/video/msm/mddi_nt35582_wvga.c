@@ -88,6 +88,12 @@ static int __devinit nt35582_probe(struct platform_device *pdev)
 		return 0;
 	}
 
+	mddi_queue_register_write(0xB101, 0x01, TRUE, 0);
+	mddi_queue_register_write(0xB102, 0x82, TRUE, 0);
+	mddi_queue_register_write(0xB107, 0x5A, TRUE, 0);
+	mddi_queue_register_write(0x4400, 0x00, TRUE, 0);
+	mddi_queue_register_write(0x4401, 0xC8, TRUE, 0);
+
 	msm_fb_add_device(pdev);
 
 	return 0;
