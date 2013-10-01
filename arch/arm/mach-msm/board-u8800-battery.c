@@ -174,8 +174,8 @@ static struct android_bat_platform_data android_bat_pdata = {
 	.temp_high_recovery	= 400,
 	.temp_low_recovery	= 50,
 	.temp_low_threshold	= 0,
-	.full_charging_time	= (90 * 60),
-	.recharging_time	= (10 * 60),
+	.full_charging_time	= (240 * 60),
+	.recharging_time	= (15 * 60),
 	.recharging_voltage	= 4200000,
 };
 
