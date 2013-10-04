@@ -218,7 +218,7 @@ static int bq2415x_i2c_read(struct bq2415x_device *bq, u8 reg)
 		mutex_unlock(&bq2415x_i2c_mutex);
 
 		if (ret != ARRAY_SIZE(msg))
-			msleep_interruptible(10);
+			msleep(10);
 		else
 			break;
 	}
@@ -278,7 +278,7 @@ static int bq2415x_i2c_write(struct bq2415x_device *bq, u8 reg, u8 val)
 		mutex_unlock(&bq2415x_i2c_mutex);
 
 		if (ret != ARRAY_SIZE(msg))
-			msleep_interruptible(10);
+			msleep(10);
 		else
 			break;
 	}
