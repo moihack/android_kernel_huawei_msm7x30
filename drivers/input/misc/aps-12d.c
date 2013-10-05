@@ -57,6 +57,9 @@ struct aps_12d_data {
 	struct aps_12d_settings settings;
 	enum aps_12d_status status;
 	struct aps_12d_sensor_info sensors[NUM_SENSORS];
+
+	int last_adc_count[NUM_SENSORS];
+
 	/* Keep index so we don't have to loop it through every time. */
 	int sensors_enabled;
 	struct regulator *vcc_regulator;
@@ -281,9 +284,11 @@ static int aps_12d_reset(struct aps_12d_data *data)
 	return ret;
 }
 
-static void aps_12d_report(struct input_dev *input_device,
+static void aps_12d_report(struct aps_12d_data *data,
 	enum aps_12d_sensor_type type, int adc_count)
 {
+	struct input_dev *input_device = data->input_device;
+
 	mutex_lock(&input_device->mutex);
 
 	/* Reporting negative is not allowed. */
@@ -296,11 +301,18 @@ static void aps_12d_report(struct input_dev *input_device,
 			input_report_abs(input_device, ABS_MISC, adc_count);
 			break;
 		case APS_12D_SENSOR_PROXIMITY:
+			/* Hack: Userspace needs to sample this value. If it is
+			 * same value, it gets filtered. */
+			if (data->last_adc_count[type] == adc_count)
+				adc_count += 1;
+
 			input_report_abs(input_device, ABS_DISTANCE, adc_count);
 			break;
 		default:
 			break;
 	}
+
+	data->last_adc_count[type] = adc_count;
 
 	input_sync(input_device);
 
@@ -376,7 +388,7 @@ static void aps_12d_input_light_work_func(struct work_struct *work)
 	adc_count = aps_12d_adc_count(data->client);
 
 	/* Second, report the data. */
-	aps_12d_report(data->input_device, APS_12D_SENSOR_LIGHT, adc_count);
+	aps_12d_report(data, APS_12D_SENSOR_LIGHT, adc_count);
 
 	/* Finally, reschedule. */
 	aps_12d_schedule(data, &data->sensors[APS_12D_SENSOR_LIGHT]);
@@ -420,7 +432,7 @@ static void aps_12d_input_prox_work_func(struct work_struct *work)
 	final_adc = proximity_adc - surround_adc;
 
 	/* Fourth, report the data. */
-	aps_12d_report(data->input_device, APS_12D_SENSOR_PROXIMITY, final_adc);
+	aps_12d_report(data, APS_12D_SENSOR_PROXIMITY, final_adc);
 
 	/* Finally, reschedule. */
 	aps_12d_schedule(data, &data->sensors[APS_12D_SENSOR_PROXIMITY]);
