@@ -61,8 +61,6 @@ static ssize_t usb_mode_store(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t count)
 {
 	struct msm_otg *otg_dev = the_msm_otg;
-	bool work = true;
-	unsigned long flags;
 	enum usb_mode new_mode;
 
 	if (sscanf(buf, "%d", (int *)&new_mode) != 1)
@@ -72,30 +70,19 @@ static ssize_t usb_mode_store(struct device *dev,
 	msm_otg_start_peripheral(otg_dev->phy.otg, REQUEST_STOP);
 	msm_otg_start_host(otg_dev->phy.otg, REQUEST_STOP);
 
-	spin_lock_irqsave(&otg_dev->lock, flags);
 	switch(new_mode)
 	{
 	case USB_PERIPHERAL_MODE:
 		otg_dev->pdata->usb_mode = USB_PERIPHERAL_MODE;
-		set_bit(B_SESS_VLD, &otg_dev->inputs);
-		set_bit(ID, &otg_dev->inputs);
+		msm_otg_set_id_state(true);
 		break;
 	case USB_HOST_MODE:
 		otg_dev->pdata->usb_mode = USB_HOST_MODE;
-		clear_bit(B_SESS_VLD, &otg_dev->inputs);
-		clear_bit(ID, &otg_dev->inputs);
-		set_bit(A_BUS_REQ, &otg_dev->inputs);
+		msm_otg_set_id_state(false);
 		break;
 	default:
-		work = false;
 		pr_info("%s: unknown mode specified\n", __func__);
-	}
-	spin_unlock_irqrestore(&otg_dev->lock, flags);
-
-	/* Do the normal routine needed to start peripheral/host. */
-	if (work) {
-		wake_lock(&otg_dev->wlock);
-		queue_work(otg_dev->wq, &otg_dev->sm_work);
+		return -EINVAL;
 	}
 
 	return count;
@@ -1263,9 +1250,6 @@ static void msm_otg_set_id_state(int id)
 {
 	struct msm_otg *dev = the_msm_otg;
 	unsigned long flags;
-
-	if (!atomic_read(&dev->in_lpm))
-		return;
 
 	if (id) {
 		set_bit(ID, &dev->inputs);
