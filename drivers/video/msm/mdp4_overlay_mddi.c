@@ -731,7 +731,7 @@ void mdp4_primary_rdptr(void)
 static void mdp4_mddi_vsync_enable(struct msm_fb_data_type *mfd,
 		struct mdp4_overlay_pipe *pipe, int which)
 {
-	uint32 data, tear_en;
+	uint32 start_y, data, tear_en;
 
 	tear_en = (1 << which);
 
@@ -762,14 +762,17 @@ static void mdp4_mddi_vsync_enable(struct msm_fb_data_type *mfd,
 		 * at the same write is not throttled(shorter dmap
 		 * time)
 		 */
+		if (vsync_start_y_adjust <= pipe->dst_y)
+			start_y = pipe->dst_y - vsync_start_y_adjust;
+		else
+			start_y = (mfd->total_lcd_lines - 1) -
+				(vsync_start_y_adjust - pipe->dst_y);
+
 		if (mfd->panel_info.lcd.primary_start_pos)
 			MDP_OUTP(MDP_BASE + 0x214,
 				mfd->panel_info.lcd.primary_start_pos);
 		else
-			MDP_OUTP(MDP_BASE + 0x214,
-				 mfd->panel_info.lcd.v_back_porch +
-				 mfd->panel_info.lcd.v_front_porch +
-				 vsync_start_y_adjust);
+			MDP_OUTP(MDP_BASE + 0x214, start_y);
 	} else
 		data &= ~tear_en;
 	MDP_OUTP(MDP_BASE + 0x20c, data);
