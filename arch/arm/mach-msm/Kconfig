@@ -2653,4 +2653,11 @@ config MSM_CPU_PWRCTL
 	  stand alone power collapse operation. Selecting this option
 	  ensures that they are always off.
 
+config MSM_7X30_OVERCLOCK
+	bool "Allow MSM 7x30 to overclock"
+	help
+	  Allows MSM 7x30 devices to skip PLL_2 value, which sets a limit on
+	  maximum clock speed.
+
+	  If unsure, say 'N' here.
 endif
