@@ -743,6 +743,8 @@ static int bq2415x_set_defaults(struct bq2415x_device *bq)
 
 /**** charger mode functions ****/
 
+static void bq2415x_set_autotimer(struct bq2415x_device *bq, int state);
+
 /* set charger mode */
 static int bq2415x_set_mode(struct bq2415x_device *bq, enum bq2415x_mode mode)
 {
@@ -765,6 +767,9 @@ static int bq2415x_set_mode(struct bq2415x_device *bq, enum bq2415x_mode mode)
 		ret = bq2415x_exec_command(bq, BQ2415X_BOOST_MODE_ENABLE);
 		break;
 	}
+
+	/* Safe to turn off safety timer when charger is in turned off mode. */
+	bq2415x_set_autotimer(bq, (mode != BQ2415X_MODE_OFF));
 
 	return ret;
 
@@ -1446,7 +1451,6 @@ static int bq2415x_probe(struct i2c_client *client,
 	}
 
 	INIT_DELAYED_WORK(&bq->work, bq2415x_timer_work);
-	bq2415x_set_autotimer(bq, 1);
 
 	dev_info(bq->dev, "driver registered\n");
 	return 0;
