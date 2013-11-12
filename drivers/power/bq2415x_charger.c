@@ -829,6 +829,37 @@ static void bq2415x_set_autotimer(struct bq2415x_device *bq, int state)
 	mutex_unlock(&bq2415x_timer_mutex);
 }
 
+/* compare values & reset if needed (for safety) */
+static void bq2415x_compare_values(struct bq2415x_device *bq)
+{
+	bool reset = false;
+
+	if (bq2415x_get_current_limit(bq) != bq->init_data.current_limit) {
+		reset = true;
+		goto end;
+	}
+	if (bq2415x_get_weak_battery_voltage(bq)
+		!= bq->init_data.weak_battery_voltage) {
+		reset = true;
+		goto end;
+	}
+	if (bq2415x_get_battery_regulation_voltage(bq)
+		!= bq->init_data.battery_regulation_voltage) {
+		reset = true;
+		goto end;
+	}
+	if (bq2415x_get_charge_current(bq) != bq->init_data.charge_current) {
+		reset = true;
+		goto end;
+	}
+
+end:
+	if (reset) {
+		dev_err(bq->dev, "Registers corrupted, restoring\n");
+		bq2415x_set_mode(bq, bq->mode);
+	}
+}
+
 /* delayed work function for auto resetting chip timer */
 static void bq2415x_timer_work(struct work_struct *work)
 {
@@ -952,6 +983,8 @@ static void bq2415x_timer_work(struct work_struct *work)
 	}
 
 reschedule:
+	bq2415x_compare_values(bq);
+
 	schedule_delayed_work(&bq->work, BQ2415X_TIMER_TIMEOUT * HZ);
 }
 
