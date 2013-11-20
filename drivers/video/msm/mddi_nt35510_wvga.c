@@ -149,7 +149,6 @@ static int __init mddi_nt35510_wvga_init(void)
 	pinfo->lcd.vsync_enable = TRUE;
 	pinfo->lcd.hw_vsync_mode = TRUE;
 	pinfo->lcd.vsync_notifier_period = (1 * HZ);
-	pinfo->lcd.primary_start_pos = 795;
 	pinfo->bl_max = 256;
 	pinfo->bl_min = 1;
 	pinfo->clk_rate = 192000000;
