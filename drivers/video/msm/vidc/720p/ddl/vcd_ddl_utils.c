@@ -158,7 +158,7 @@ void ddl_pmem_alloc(struct ddl_buf_addr *buff_addr, size_t sz, u32 align)
 	} else {
 		physical_addr = (u32)
 			allocate_contiguous_memory_nomap(alloc_size,
-						ddl_context->memtype, SZ_4K);
+						res_trk_get_mem_type(), SZ_4K);
 		if (!physical_addr) {
 			ERR("\n%s(): DDL pmem allocate failed\n",
 			       __func__);
