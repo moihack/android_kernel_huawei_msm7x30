@@ -71,11 +71,24 @@ static struct gpiomux_setting mdp_vsync_cfg = {
 	.dir = GPIOMUX_IN,
 };
 
+static struct gpiomux_setting audio_pamp_cfg = {
+	.func = GPIOMUX_FUNC_GPIO,
+	.drv = GPIOMUX_DRV_2MA,
+	.pull = GPIOMUX_PULL_NONE,
+	.dir = GPIOMUX_OUT_LOW,
+};
+
 static struct msm_gpiomux_config msm7x30_standard_configs[] __initdata = {
 	{	/* MDP_VSYNC */
 		.gpio = 30,
 		.settings = {
 			[GPIOMUX_SUSPENDED]	= &mdp_vsync_cfg,
+		},
+	},
+	{	/* AUDIO_PAMP */
+		.gpio = 82,
+		.settings = {
+			[GPIOMUX_SUSPENDED]	= &audio_pamp_cfg,
 		},
 	},
 };

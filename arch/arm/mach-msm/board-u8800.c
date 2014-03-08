@@ -766,22 +766,6 @@ static struct platform_device msm_gemini_device = {
 #endif
 
 #ifdef CONFIG_MSM7KV2_AUDIO
-static uint32_t audio_pamp_gpio_config =
-   GPIO_CFG(82, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA);
-
-static int __init snddev_poweramp_gpio_init(void)
-{
-	int rc;
-
-	rc = gpio_tlmm_config(audio_pamp_gpio_config, GPIO_CFG_ENABLE);
-	if (rc) {
-		printk(KERN_ERR
-			"%s: gpio_tlmm_config(%#x)=%d\n",
-			__func__, audio_pamp_gpio_config, rc);
-	}
-	return rc;
-}
-
 void msm_snddev_poweramp_on(void)
 {
 	gpio_set_value(82, 1);	/* enable spkr poweramp */
@@ -3676,7 +3660,6 @@ static void __init msm7x30_init(void)
 	qup_device_i2c_init();
 	msm7x30_init_marimba();
 #ifdef CONFIG_MSM7KV2_AUDIO
-	snddev_poweramp_gpio_init();
 	snddev_hsed_voltage_init();
 	aux_pcm_gpio_init();
 #endif
