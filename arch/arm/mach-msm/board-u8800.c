@@ -81,6 +81,7 @@
 #include <linux/input/synaptics_dsx.h>
 #include <linux/input/aps-12d.h>
 #include <linux/input/lsm303dlh.h>
+#include <sound/tpa2028d1.h>
 
 
 #ifdef CONFIG_FB_MSM_TRIPLE_BUFFER
@@ -766,16 +767,26 @@ static struct platform_device msm_gemini_device = {
 #endif
 
 #ifdef CONFIG_MSM7KV2_AUDIO
+#ifdef CONFIG_SND_SOC_TPA2028D1
+static struct tpa2028d1_callbacks *tpa2028d1_cb;
+#endif
+
 void msm_snddev_poweramp_on(void)
 {
-	gpio_set_value(82, 1);	/* enable spkr poweramp */
 	pr_debug("%s: power on amplifier\n", __func__);
+#ifdef CONFIG_SND_SOC_TPA2028D1
+	if (tpa2028d1_cb)
+		tpa2028d1_cb->enable(tpa2028d1_cb, true);
+#endif
 }
 
 void msm_snddev_poweramp_off(void)
 {
-	gpio_set_value(82, 0);	/* disable spkr poweramp */
 	pr_debug("%s: power off amplifier\n", __func__);
+#ifdef CONFIG_SND_SOC_TPA2028D1
+	if (tpa2028d1_cb)
+		tpa2028d1_cb->enable(tpa2028d1_cb, false);
+#endif
 }
 
 static struct regulator_bulk_data snddev_regs[] = {
@@ -1757,6 +1768,37 @@ static struct lsm303dlh_mag_platform_data lsm303dlh_mag_pdata = {
 };
 #endif
 
+#ifdef CONFIG_SND_SOC_TPA2028D1
+static struct tpa2028d1_callbacks *tpa2028d1_cb = NULL;
+
+static void tpa2028d1_reg_cb(struct tpa2028d1_callbacks *cb)
+{
+	tpa2028d1_cb = cb;
+}
+static void tpa2028d1_unreg_cb(void)
+{
+	tpa2028d1_cb = NULL;
+}
+
+static struct tpa2028d1_platform_data tpa2028d1_pdata = {
+	.amp_en_gpio			= 82,
+	.config				= {
+		.ng_enabled		= 1,
+		.atk_time		= 5,
+		.rel_time		= 10,
+		.hold_time		= 0,
+		.fixed_gain		= 26,
+		.out_lim_disabled	= 0,
+		.ng_threshold		= 3,
+		.out_lim_level		= 28,
+		.max_gain		= 0,
+		.comp_ratio		= 2,
+	},
+	.register_callbacks		= tpa2028d1_reg_cb,
+	.unregister_callbacks		= tpa2028d1_unreg_cb,
+};
+#endif
+
 static struct i2c_board_info msm_i2c_board_info[] = {
 	#ifdef CONFIG_APS_12D
 	{
@@ -1772,6 +1814,12 @@ static struct i2c_board_info msm_i2c_board_info[] = {
 	{
 		I2C_BOARD_INFO("lsm303dlh_mag", 0x3C >> 1),
 		.platform_data = &lsm303dlh_mag_pdata,
+	},
+	#endif
+	#ifdef CONFIG_SND_SOC_TPA2028D1
+	{
+		I2C_BOARD_INFO("tpa2028d1", 0xB0 >> 1),
+		.platform_data = &tpa2028d1_pdata,
 	},
 	#endif
 };
