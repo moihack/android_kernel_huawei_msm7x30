@@ -3581,7 +3581,7 @@ static int __init i2c_touch_init(void)
 		i2c_new_device(touch_i2c_adapter, &atmel_mxt_ts);
 #endif
 	} else {
-		pr_debug("%s: Found Synaptics\n", __func__);
+		pr_debug("%s: Found Synaptics TM-1564\n", __func__);
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI4
 		i2c_new_device(touch_i2c_adapter, &synaptics_rmi4_ts);
 #endif
