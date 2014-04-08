@@ -1,0 +1,169 @@
+/*
+ * Copyright (c) 2014, Rudolf Tammekivi.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ */
+
+#include <asm-generic/setup.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/string.h>
+#include <mach/rpc_nv.h>
+
+#define SERIALNO_SIZE	17
+#define MACADDR_SIZE	6
+
+struct hwprops_data {
+	bool opened;
+
+	uint8_t bt_mac_address[MACADDR_SIZE];
+	uint8_t wlan_mac_address[MACADDR_SIZE];
+	char serialno[SERIALNO_SIZE];
+};
+
+static struct hwprops_data *data = NULL;
+
+struct factory_info {
+	char meid[SERIALNO_SIZE];	/* Not null-terminated. */
+	uint64_t unknown1;
+	char serialno[SERIALNO_SIZE];	/* Not null-terminated. */
+	uint64_t unknown2;
+	char test[50];			/* Factory test info. */
+} __attribute__((packed));
+static void hwprops_get_serialno(void)
+{
+	int rc;
+	struct factory_info finfo;
+	nv_cmd_item_type item;
+	char serialno[SERIALNO_SIZE];
+
+	/* Read factory info from NV. */
+	rc = msm_nv_read(NV_FACTORY_INFO_I, &item);
+	if (rc) {
+		pr_err("%s: failed to read nv %d %d\n", __func__,
+			NV_FACTORY_INFO_I, rc);
+		return;
+	}
+
+	memcpy(&finfo, &item.factory_info, sizeof(finfo));
+
+	/* Copy over to properly null-terminate. */
+	strncpy(serialno, finfo.serialno, SERIALNO_SIZE);
+	serialno[SERIALNO_SIZE-1] = '\0';
+
+	strncpy(data->serialno, serialno, SERIALNO_SIZE);
+
+	pr_debug("%s: %s\n", __func__, data->serialno);
+}
+
+static void hwprops_get_btmac(void)
+{
+	int rc;
+	nv_cmd_item_type item;
+	int i;
+
+	/* Read BT MAC address from NV. */
+	rc = msm_nv_read(NV_BD_ADDR_I, &item);
+	if (rc) {
+		pr_err("%s: failed to read nv %d %d\n", __func__,
+			NV_FACTORY_INFO_I, rc);
+		return;
+	}
+
+	for (i = 0; i < MACADDR_SIZE; i++)
+		data->bt_mac_address[(MACADDR_SIZE - 1) - i] = item.bd_addr[i];
+
+	pr_debug("%s: %02X:%02X:%02X:%02X:%02X:%02X\n", __func__,
+		data->bt_mac_address[0], data->bt_mac_address[1],
+		data->bt_mac_address[2], data->bt_mac_address[3],
+		data->bt_mac_address[4], data->bt_mac_address[5]);
+}
+
+static void hwprops_get_wlanmac(void)
+{
+	int rc;
+	nv_cmd_item_type item;
+	int i;
+
+	/* Read WLAN MAC address from NV. */
+	rc = msm_nv_read(NV_WLAN_MAC_ADDRESS_I, &item);
+	if (rc) {
+		printk("%s: failed to read nv %d %d\n", __func__,
+			NV_FACTORY_INFO_I, rc);
+		return;
+	}
+
+	for (i = 0; i < MACADDR_SIZE; i++) {
+		data->wlan_mac_address[(MACADDR_SIZE - 1) - i] =
+			item.wlan_mac_address[i];
+	}
+
+	pr_debug("%s: %02X:%02X:%02X:%02X:%02X:%02X\n", __func__,
+		data->wlan_mac_address[0], data->wlan_mac_address[1],
+		data->wlan_mac_address[2], data->wlan_mac_address[3],
+		data->wlan_mac_address[4], data->wlan_mac_address[5]);
+}
+
+static int __init hwprops_fixup_serialno(void)
+{
+	/* Add serialno to the command line. */
+	strlcat(saved_command_line, " androidboot.serialno=",
+		COMMAND_LINE_SIZE);
+	strlcat(saved_command_line, data->serialno, COMMAND_LINE_SIZE);
+
+	return 0;
+}
+
+static int __init hwprops_init(void)
+{
+	int ret;
+
+	data = kzalloc(sizeof(*data), GFP_KERNEL);
+	if (!data) {
+		pr_err("%s: failed to allocate memory\n", __func__);
+		return -ENOMEM;
+	}
+
+	/* Initialize NV RPC client. */
+	ret = msm_nv_rpc_connect();
+	if (ret) {
+		pr_err("%s: failed to connect ret=%d\n", __func__, ret);
+		return ret;
+	}
+	data->opened = true;
+
+	/* Get all NV RPC props. */
+	hwprops_get_serialno();
+	hwprops_get_btmac();
+	hwprops_get_wlanmac();
+
+	ret = hwprops_fixup_serialno();
+	if (ret) {
+		pr_err("%s: failed to fixup serialno ret=%d\n", __func__, ret);
+		goto err;
+	}
+
+	/* Exit NV RPC client. */
+	ret = msm_nv_rpc_close();
+	if (ret) {
+		pr_err("%s: failed to close ret=%d\n", __func__, ret);
+		return ret;
+	}
+	data->opened = false;
+
+	return 0;
+err:
+	msm_nv_rpc_close();
+	data->opened = false;
+	return ret;
+}
+
+late_initcall(hwprops_init);
