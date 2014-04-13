@@ -782,16 +782,6 @@ static int __init snddev_poweramp_gpio_init(void)
 	return rc;
 }
 
-void msm_snddev_tx_route_config(void)
-{
-	pr_debug("%s()\n", __func__);
-}
-
-void msm_snddev_tx_route_deconfig(void)
-{
-	pr_debug("%s()\n", __func__);
-}
-
 void msm_snddev_poweramp_on(void)
 {
 	gpio_set_value(82, 1);	/* enable spkr poweramp */
