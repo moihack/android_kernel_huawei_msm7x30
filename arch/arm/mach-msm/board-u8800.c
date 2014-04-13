@@ -1904,7 +1904,7 @@ static struct msm_pm_boot_platform_data msm_pm_boot_pdata __initdata = {
 static struct msm_usb_host_platform_data msm_usb_host_pdata = {
         .phy_info   = (USB_PHY_INTEGRATED | USB_PHY_MODEL_45NM),
         .vbus_power = batt_vbus_power,
-        .power_budget   = 200,
+        .power_budget   = 300,
 };
 #endif
 
