@@ -143,8 +143,8 @@ static int __init mddi_nt35582_wvga_init(void)
 	pinfo->mddi.is_type1 = TRUE;
 	pinfo->wait_cycle = 0;
 	pinfo->bpp = 16;
-	pinfo->lcd.refx100 = 5400;
-	pinfo->lcd.v_back_porch = 6;
+	pinfo->lcd.refx100 = 5330;
+	pinfo->lcd.v_back_porch = 0;
 	pinfo->lcd.v_front_porch = 0;
 	pinfo->lcd.v_pulse_width = 0;
 	pinfo->lcd.rev = 1;
@@ -154,8 +154,8 @@ static int __init mddi_nt35582_wvga_init(void)
 	pinfo->bl_max = 256;
 	pinfo->bl_min = 1;
 	pinfo->clk_rate = 192000000;
-	pinfo->clk_min = 192000000;
-	pinfo->clk_max = 192000000;
+	pinfo->clk_min = 190000000;
+	pinfo->clk_max = 200000000;
 	pinfo->fb_num = 2;
 
 	ret = platform_device_register(&this_device);
