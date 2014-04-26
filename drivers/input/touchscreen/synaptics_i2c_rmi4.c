@@ -1014,9 +1014,15 @@ static int synaptics_rmi4_sensor_report(struct synaptics_rmi4_data *rmi4_data)
 static irqreturn_t synaptics_rmi4_irq(int irq, void *data)
 {
 	struct synaptics_rmi4_data *rmi4_data = data;
-
-	synaptics_rmi4_sensor_report(rmi4_data);
-
+	int touch_count;
+	do {
+		touch_count = synaptics_rmi4_sensor_report(rmi4_data);
+		if (touch_count)
+			wait_event_timeout(rmi4_data->wait,
+				rmi4_data->touch_stopped, msecs_to_jiffies(1));
+		else
+			break;
+	} while (!rmi4_data->touch_stopped);
 	return IRQ_HANDLED;
 }
 
