@@ -1,6 +1,6 @@
 /*
  * Voltage Battery Driver
- * Copyright (C) 2013  Rudolf Tammekivi <rtammekivi@gmail.com>
+ * Copyright (C) 2014  Rudolf Tammekivi <rtammekivi@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
  */
 
 #define DEBUG 1
+#define VERBOSE_DEBUG 1
 
 #define STANDARD_UPDATE_MS (60 * 1000)
 #define UNRELIABLE_UPDATE_MS (30 * 1000)
@@ -112,7 +113,7 @@ static uint8_t voltage_bat_cb_get_capacity(
 		dev_vdbg(data->dev, "manual update triggered\n");
 		voltage_bat_update(data);
 	}
-	return data->capacity.relative;
+	return data->capacity.stable;
 }
 
 static void voltage_bat_cb_unreliable_update(
@@ -162,9 +163,11 @@ static void voltage_bat_update(struct voltage_bat_data *data)
 norelative:
 	diff_relative = data->capacity.relative - data->capacity.stable;
 
-	if (data->capacity.stable > 0 && diff_relative < 0)
+	if (data->capacity.stable > 0 && diff_relative < 0
+		&& !data->charging)
 		data->capacity.stable--;
-	else if (data->capacity.stable < 100 && diff_relative > 0)
+	else if (data->capacity.stable < 100 && diff_relative > 0
+		&& data->charging)
 		data->capacity.stable++;
 
 	dev_vdbg(data->dev,
