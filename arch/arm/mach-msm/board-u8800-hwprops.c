@@ -13,6 +13,7 @@
  */
 
 #include <asm-generic/setup.h>
+#include <linux/export.h>
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/stat.h>
@@ -283,3 +284,12 @@ err:
 }
 
 late_initcall(hwprops_init);
+
+static int hwprops_get_wlanmac(uint8_t *wlanmac)
+{
+	if (!data)
+		return -EINVAL;
+	memcpy(wlanmac, data->wlan_mac_address, sizeof(data->wlan_mac_address));
+	return 0;
+}
+EXPORT_SYMBOL(hwprops_get_wlanmac);
