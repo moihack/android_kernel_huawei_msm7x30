@@ -39,7 +39,7 @@ struct factory_info {
 	uint64_t unknown2;
 	char test[50];			/* Factory test info. */
 } __attribute__((packed));
-static void hwprops_get_serialno(void)
+static void hwprops_get_rpc_serialno(void)
 {
 	int rc;
 	struct factory_info finfo;
@@ -65,7 +65,7 @@ static void hwprops_get_serialno(void)
 	pr_debug("%s: %s\n", __func__, data->serialno);
 }
 
-static void hwprops_get_btmac(void)
+static void hwprops_get_rpc_btmac(void)
 {
 	int rc;
 	nv_cmd_item_type item;
@@ -88,7 +88,7 @@ static void hwprops_get_btmac(void)
 		data->bt_mac_address[4], data->bt_mac_address[5]);
 }
 
-static void hwprops_get_wlanmac(void)
+static void hwprops_get_rpc_wlanmac(void)
 {
 	int rc;
 	nv_cmd_item_type item;
@@ -251,9 +251,9 @@ static int __init hwprops_init(void)
 	data->opened = true;
 
 	/* Get all NV RPC props. */
-	hwprops_get_serialno();
-	hwprops_get_btmac();
-	hwprops_get_wlanmac();
+	hwprops_get_rpc_serialno();
+	hwprops_get_rpc_btmac();
+	hwprops_get_rpc_wlanmac();
 
 	ret = hwprops_fixup_serialno();
 	if (ret) {
