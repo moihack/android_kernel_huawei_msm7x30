@@ -15,6 +15,7 @@
 #include <asm-generic/setup.h>
 #include <linux/init.h>
 #include <linux/slab.h>
+#include <linux/stat.h>
 #include <linux/string.h>
 #include <mach/rpc_nv.h>
 
@@ -122,6 +123,115 @@ static int __init hwprops_fixup_serialno(void)
 	return 0;
 }
 
+static ssize_t hwprops_sysfs_attr_show(struct kobject *kobj,
+	struct kobj_attribute *attr, char *buf)
+{
+	if (!strcmp(attr->attr.name, "serialno")) {
+		return sprintf(buf, "%s\n", data->serialno);
+	} else if (!strcmp(attr->attr.name, "btmac")) {
+		return sprintf(buf, "%02X:%02X:%02X:%02X:%02X:%02X\n",
+			data->bt_mac_address[0], data->bt_mac_address[1],
+			data->bt_mac_address[2], data->bt_mac_address[3],
+			data->bt_mac_address[4], data->bt_mac_address[5]);
+	} else if (!strcmp(attr->attr.name, "wlanmac")) {
+		return sprintf(buf, "%02X:%02X:%02X:%02X:%02X:%02X\n",
+			data->wlan_mac_address[0], data->wlan_mac_address[1],
+			data->wlan_mac_address[2], data->wlan_mac_address[3],
+			data->wlan_mac_address[4], data->wlan_mac_address[5]);
+	}
+
+	return -EINVAL;
+}
+
+static ssize_t hwprops_sysfs_attr_store(struct kobject *kobj,
+	struct kobj_attribute *attr, const char *buf, size_t count)
+{
+	if (!strcmp(attr->attr.name, "serialno")) {
+		char serialno[SERIALNO_SIZE];
+		if (sscanf(buf, "%16s", serialno) != 1)
+			return -EINVAL;
+		strncpy(data->serialno, serialno, SERIALNO_SIZE);
+	} else if (!strcmp(attr->attr.name, "btmac")) {
+		uint8_t bt_mac_address[MACADDR_SIZE];
+		if (sscanf(buf, "%02hhX:%02hhX:%02hhX:%02hhX:%02hhX:%02hhX",
+			&bt_mac_address[0], &bt_mac_address[1],
+			&bt_mac_address[2], &bt_mac_address[3],
+			&bt_mac_address[4], &bt_mac_address[5])
+			!= 6)
+			return -EINVAL;
+		memcpy(data->bt_mac_address, bt_mac_address,
+			sizeof(bt_mac_address));
+	} else if (!strcmp(attr->attr.name, "wlanmac")) {
+		uint8_t wlan_mac_address[MACADDR_SIZE];
+		if (sscanf(buf, "%02hhX:%02hhX:%02hhX:%02hhX:%02hhX:%02hhX",
+			&wlan_mac_address[0], &wlan_mac_address[1],
+			&wlan_mac_address[2], &wlan_mac_address[3],
+			&wlan_mac_address[4], &wlan_mac_address[5])
+			!= 6)
+			return -EINVAL;
+		memcpy(data->wlan_mac_address, wlan_mac_address,
+			sizeof(wlan_mac_address));
+	} else
+		return -EINVAL;
+	return count;
+}
+
+static struct kobj_attribute hwprops_sysfs_serialno_attr = {
+	.attr = {
+		.name = "serialno",
+		.mode = S_IRUGO | S_IWUSR,
+	},
+	.show = hwprops_sysfs_attr_show,
+	.store = hwprops_sysfs_attr_store,
+};
+
+static struct kobj_attribute hwprops_sysfs_btmac_attr = {
+	.attr = {
+		.name = "btmac",
+		.mode = S_IRUGO | S_IWUSR,
+	},
+	.show = hwprops_sysfs_attr_show,
+	.store = hwprops_sysfs_attr_store,
+};
+
+static struct kobj_attribute hwprops_sysfs_wlanmac_attr = {
+	.attr = {
+		.name = "wlanmac",
+		.mode = S_IRUGO | S_IWUSR,
+	},
+	.show = hwprops_sysfs_attr_show,
+	.store = hwprops_sysfs_attr_store,
+};
+
+static struct attribute *hwprops_sysfs_attrs[] = {
+	&hwprops_sysfs_serialno_attr.attr,
+	&hwprops_sysfs_btmac_attr.attr,
+	&hwprops_sysfs_wlanmac_attr.attr,
+	NULL
+};
+
+static struct attribute_group hwprops_sysfs_attr_group = {
+	.attrs = hwprops_sysfs_attrs,
+};
+
+static int __init hwprops_init_sysfs(void)
+{
+	int ret = 0;
+	static struct kobject *hwprops_kobj;
+
+	/* Already registered. */
+	if (hwprops_kobj)
+		return ret;
+
+	hwprops_kobj = kobject_create_and_add("hwprops", NULL);
+	if (!hwprops_kobj)
+		return -ENODEV;
+
+	ret = sysfs_create_group(hwprops_kobj, &hwprops_sysfs_attr_group);
+
+	return ret;
+}
+
 static int __init hwprops_init(void)
 {
 	int ret;
@@ -148,6 +258,12 @@ static int __init hwprops_init(void)
 	ret = hwprops_fixup_serialno();
 	if (ret) {
 		pr_err("%s: failed to fixup serialno ret=%d\n", __func__, ret);
+		goto err;
+	}
+
+	ret = hwprops_init_sysfs();
+	if (ret) {
+		pr_err("%s: failed to init sysfs ret=%d\n", __func__, ret);
 		goto err;
 	}
 
