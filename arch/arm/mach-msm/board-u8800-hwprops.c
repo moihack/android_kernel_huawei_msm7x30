@@ -204,10 +204,48 @@ static struct kobj_attribute hwprops_sysfs_wlanmac_attr = {
 	.store = hwprops_sysfs_attr_store,
 };
 
+static ssize_t hwprops_sysfs_reset_attr_store(struct kobject *kobj,
+	struct kobj_attribute *attr, const char *buf, size_t count)
+{
+	int ret;
+
+	/* Initialize NV RPC client. */
+	ret = msm_nv_rpc_connect();
+	if (ret) {
+		pr_err("%s: failed to connect ret=%d\n", __func__, ret);
+		return ret;
+	}
+	data->opened = true;
+
+	/* Get all NV RPC props. */
+	hwprops_get_rpc_serialno();
+	hwprops_get_rpc_btmac();
+	hwprops_get_rpc_wlanmac();
+
+	/* Exit NV RPC client. */
+	ret = msm_nv_rpc_close();
+	if (ret) {
+		pr_err("%s: failed to close ret=%d\n", __func__, ret);
+		return ret;
+	}
+	data->opened = false;
+
+	return count;
+}
+
+static struct kobj_attribute hwprops_sysfs_reset_attr = {
+	.attr = {
+		.name = "reset",
+		.mode = S_IWUSR,
+	},
+	.store = hwprops_sysfs_reset_attr_store,
+};
+
 static struct attribute *hwprops_sysfs_attrs[] = {
 	&hwprops_sysfs_serialno_attr.attr,
 	&hwprops_sysfs_btmac_attr.attr,
 	&hwprops_sysfs_wlanmac_attr.attr,
+	&hwprops_sysfs_reset_attr.attr,
 	NULL
 };
 
