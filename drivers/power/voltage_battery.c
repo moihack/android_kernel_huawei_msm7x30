@@ -170,6 +170,16 @@ norelative:
 		&& data->charging)
 		data->capacity.stable++;
 
+	/* Update capacity when reched boundaries. This is to make sure device
+	 * powers off before battery depletes completely. */
+	if ((direct == 0 && !data->charging) ||
+		(direct == 100 && data->charging)) {
+		data->capacity.stable = direct;
+		data->capacity.relative = direct;
+		diff_direct = 0;
+		diff_relative = 0;
+	}
+
 	dev_vdbg(data->dev,
 		"c: %d r: %d ld: %d d: %d u: %d ur: %d chg %d\n",
 		data->capacity.stable,
