@@ -171,8 +171,7 @@ norelative:
 		data->capacity.stable++;
 
 	dev_vdbg(data->dev,
-		"Capacity: %d Relative: %d LastDirect: %d "
-		"Direct: %d Unreliable: %d Use Relative: %d Charging %d\n",
+		"c: %d r: %d ld: %d d: %d u: %d ur: %d chg %d\n",
 		data->capacity.stable,
 		data->capacity.relative,
 		data->capacity.direct,
