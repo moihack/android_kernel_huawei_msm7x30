@@ -33,8 +33,9 @@ static struct gpiomux_setting ts_resout_sus_cfg = {
 
 static struct gpiomux_setting i2c_dcdc_sus_cfg = {
 	.func = GPIOMUX_FUNC_GPIO,
-	.drv = GPIOMUX_DRV_2MA,
-	.pull = GPIOMUX_PULL_DOWN,
+	.drv = GPIOMUX_DRV_8MA,
+	.pull = GPIOMUX_PULL_NONE,
+	.dir = GPIOMUX_OUT_HIGH,
 };
 
 static struct msm_gpiomux_config u8800_standard_configs[] __initdata = {

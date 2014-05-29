@@ -2764,9 +2764,7 @@ static struct platform_device msm_bt_power_device = {
 static struct i2c_gpio_platform_data i2c_dcdc_pdata = {
 	.scl_pin = 149,
 	.sda_pin = 150,
-	.sda_is_open_drain = 0,
-	.scl_is_open_drain = 0,
-	.udelay = 5,
+	.udelay = 5, /* 100 Khz */
 };
 
 static struct platform_device i2c_dcdc_device = {
