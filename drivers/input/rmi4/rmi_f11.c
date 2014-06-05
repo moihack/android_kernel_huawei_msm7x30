@@ -623,9 +623,10 @@ static void f11_set_abs_params(struct rmi_function *fn)
 
 	y_min = sensor->axis_align.clip_y_low;
 	if (sensor->axis_align.clip_y_high)
-		y_max = min(device_y_max, sensor->axis_align.clip_y_high);
+		y_max = min(device_y_max, sensor->axis_align.clip_y_high) -
+			sensor->axis_align.button_height;
 	else
-		y_max = device_y_max;
+		y_max = device_y_max - sensor->axis_align.button_height;
 
 	input_set_abs_params(input, ABS_MT_PRESSURE, 0,
 			DEFAULT_MAX_ABS_MT_PRESSURE, 0, 0);
