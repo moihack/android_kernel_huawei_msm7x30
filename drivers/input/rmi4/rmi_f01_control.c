@@ -346,7 +346,7 @@ static int rmi_f01_setup_debugfs(struct f01_ctl_data *ctl_data)
 }
 
 #else
-#define rmi_f01_setup_debugfs(fn) 0
+#define rmi_f01_setup_debugfs(fn)
 #endif
 
 static ssize_t rmi_fn_01_productinfo_show(struct device *dev,

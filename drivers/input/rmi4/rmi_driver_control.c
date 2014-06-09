@@ -192,7 +192,7 @@ static void teardown_debugfs(struct driver_ctl_data *data)
 }
 #else
 #define teardown_debugfs(rmi_dev)
-#define setup_debugfs(rmi_dev) 0
+#define setup_debugfs(rmi_dev)
 #endif
 
 /* sysfs show and store fns for driver attributes */

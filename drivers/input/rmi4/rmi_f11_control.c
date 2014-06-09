@@ -781,8 +781,8 @@ static int rmi_f11_setup_debugfs(struct f11_ctl_data *ctl_data)
 }
 
 #else
-#define rmi_f11_setup_sensor_debugfs(s) 0
-#define rmi_f11_setup_debugfs(d) 0
+#define rmi_f11_setup_sensor_debugfs(s)
+#define rmi_f11_setup_debugfs(d)
 #endif
 /* End adding debugfs */
 
