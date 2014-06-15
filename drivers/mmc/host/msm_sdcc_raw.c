@@ -554,11 +554,18 @@ struct raw_mmc_host {
 #define MMC_CLK_DISABLE     0
 
 /* TODO: handle multiple versions of MSM */
+#ifdef CONFIG_ARCH_MSM7X30
+#define MSM_SDC1_BASE	0xA0400000
+#define MSM_SDC2_BASE	0xA0500000
+#define MSM_SDC3_BASE	0xA3000000
+#define MSM_SDC4_BASE	0xA3100000
+#else
 #define MSM_SDC1_BASE	0x12400000
 #define MSM_SDC2_BASE	0x12140000
 #define MSM_SDC3_BASE	0x12180000
 #define MSM_SDC4_BASE	0x121C0000
 #define MSM_SDC5_BASE	0x12200000
+#endif
 
 /* data access time unit in ns */
 static const unsigned int taac_unit[] = {
@@ -611,6 +618,28 @@ static int mmc_clock_enable_disable(unsigned id, unsigned enable)
 				clk_disable(sdc_clk);
 		}
 		clk_put(sdc_clk);
+	} if (id == SDC2_CLK) {
+		sdc_clk = clk_get(&(msm_device_sdc2.dev), "core_clk");
+
+		if (sdc_clk) {
+			clk_prepare(sdc_clk);
+			if (enable)
+				clk_enable(sdc_clk);
+			else
+				clk_disable(sdc_clk);
+		}
+		clk_put(sdc_clk);
+	} else if (id == SDC2_PCLK) {
+		sdc_clk = clk_get(&(msm_device_sdc2.dev), "iface_clk");
+
+		if (sdc_clk) {
+			clk_prepare(sdc_clk);
+			if (enable)
+				clk_enable(sdc_clk);
+			else
+				clk_disable(sdc_clk);
+		}
+		clk_put(sdc_clk);
 	}
 
 	else
@@ -637,6 +666,20 @@ static int mmc_clock_get_rate(unsigned id)
 			clk_rate = clk_get_rate(sdc_clk);
 
 		clk_put(sdc_clk);
+	} else if (id == SDC2_CLK) {
+		sdc_clk = clk_get(&(msm_device_sdc2.dev), "core_clk");
+
+		if (sdc_clk)
+			clk_rate = clk_get_rate(sdc_clk);
+
+		clk_put(sdc_clk);
+	} else if (id == SDC2_PCLK) {
+		sdc_clk = clk_get(&(msm_device_sdc2.dev), "iface_clk");
+
+		if (sdc_clk)
+			clk_rate = clk_get_rate(sdc_clk);
+
+		clk_put(sdc_clk);
 	}
 
 	else
@@ -658,6 +701,20 @@ static int mmc_clock_set_rate(unsigned id, unsigned rate)
 		clk_put(sdc_clk);
 	} else if (id == SDC1_PCLK) {
 		sdc_clk = clk_get(&(msm_device_sdc1.dev), "iface_clk");
+
+		if (sdc_clk)
+			clk_set_rate(sdc_clk, rate);
+
+		clk_put(sdc_clk);
+	} else if (id == SDC2_CLK) {
+		sdc_clk = clk_get(&(msm_device_sdc2.dev), "core_clk");
+
+		if (sdc_clk)
+			clk_set_rate(sdc_clk, rate);
+
+		clk_put(sdc_clk);
+	} else if (id == SDC2_PCLK) {
+		sdc_clk = clk_get(&(msm_device_sdc2.dev), "iface_clk");
 
 		if (sdc_clk)
 			clk_set_rate(sdc_clk, rate);
@@ -2271,11 +2328,19 @@ static void mmc_controller_reset(void)
 {
 	struct clk *sdc_clk;
 
+#ifdef CONFIG_ARCH_MSM7X30
+	sdc_clk = clk_get(&(msm_device_sdc2.dev), "core_clk");
+	if (sdc_clk) {
+		clk_reset(sdc_clk, 1);
+		clk_reset(sdc_clk, 0);
+	}
+#else
 	sdc_clk = clk_get(&(msm_device_sdc1.dev), "core_clk");
 	if (sdc_clk) {
 		clk_reset(sdc_clk, 1);
 		clk_reset(sdc_clk, 0);
 	}
+#endif
 }
 
 /*
@@ -2371,7 +2436,11 @@ static int raw_mmc_probe_emmc(struct hd_struct *rhd)
 {
 	pr_debug("start sec is: %ul\n", (unsigned int) rhd->start_sect);
 	pr_debug("number of secs are: %ul\n", (unsigned int) rhd->nr_sects);
+#ifdef CONFIG_ARCH_MSM7X30
+	return raw_mmc_main(2, MSM_SDC2_BASE);
+#else
 	return raw_mmc_main(1, MSM_SDC1_BASE);
+#endif
 }
 
 static int raw_mmc_write_mmc(char *buf, sector_t start_sect,
@@ -2422,7 +2491,11 @@ static struct raw_mmc_panic_ops msm_sdcc_raw_panic_ops = {
 
 void __init msm_init_apanic(void)
 {
+#ifdef CONFIG_ARCH_MSM7X30
+	raw_mmc_mci_base = ioremap(MSM_SDC2_BASE, PAGE_SIZE);
+#else
 	raw_mmc_mci_base = ioremap(MSM_SDC1_BASE, PAGE_SIZE);
+#endif
 	if (!raw_mmc_mci_base) {
 		pr_crit("raw mmc mci base register remap failed, no kernel "
 				"log will be saved if panic happens under "
