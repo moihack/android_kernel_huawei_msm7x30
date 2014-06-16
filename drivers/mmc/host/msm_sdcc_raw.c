@@ -600,44 +600,40 @@ static int mmc_clock_enable_disable(unsigned id, unsigned enable)
 		sdc_clk = clk_get(&(msm_device_sdc1.dev), "core_clk");
 
 		if (sdc_clk) {
-			clk_prepare(sdc_clk);
 			if (enable)
-				clk_enable(sdc_clk);
+				clk_prepare_enable(sdc_clk);
 			else
-				clk_disable(sdc_clk);
+				clk_disable_unprepare(sdc_clk);
 		}
 		clk_put(sdc_clk);
 	} else if (id == SDC1_PCLK) {
 		sdc_clk = clk_get(&(msm_device_sdc1.dev), "iface_clk");
 
 		if (sdc_clk) {
-			clk_prepare(sdc_clk);
 			if (enable)
-				clk_enable(sdc_clk);
+				clk_prepare_enable(sdc_clk);
 			else
-				clk_disable(sdc_clk);
+				clk_disable_unprepare(sdc_clk);
 		}
 		clk_put(sdc_clk);
 	} if (id == SDC2_CLK) {
 		sdc_clk = clk_get(&(msm_device_sdc2.dev), "core_clk");
 
 		if (sdc_clk) {
-			clk_prepare(sdc_clk);
 			if (enable)
-				clk_enable(sdc_clk);
+				clk_prepare_enable(sdc_clk);
 			else
-				clk_disable(sdc_clk);
+				clk_disable_unprepare(sdc_clk);
 		}
 		clk_put(sdc_clk);
 	} else if (id == SDC2_PCLK) {
 		sdc_clk = clk_get(&(msm_device_sdc2.dev), "iface_clk");
 
 		if (sdc_clk) {
-			clk_prepare(sdc_clk);
 			if (enable)
-				clk_enable(sdc_clk);
+				clk_prepare_enable(sdc_clk);
 			else
-				clk_disable(sdc_clk);
+				clk_disable_unprepare(sdc_clk);
 		}
 		clk_put(sdc_clk);
 	}
