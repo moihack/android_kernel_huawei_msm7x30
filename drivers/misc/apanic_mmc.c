@@ -843,10 +843,7 @@ void apanic_mmc_parition_add(struct hd_struct *part)
 {
 	struct device *dev = part_to_dev(part);
 
-	if (!part->info || !part->info->volname[0])
-		return;
-
-	if (strncmp(part->info->volname, CONFIG_APANIC_PLABEL, BDEVNAME_SIZE)
+	if (strncmp(dev_name(dev), CONFIG_APANIC_PLABEL, BDEVNAME_SIZE)
 			== 0) {
 		if (drv_ctx.hd == part)
 			return;
