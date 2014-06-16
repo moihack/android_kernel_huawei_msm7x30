@@ -679,9 +679,9 @@ static void apanic_mmc_logbuf_dump(void)
 	ctx->buf_offset = app_threads_offset;
 	ctx->written = app_threads_offset;
 	start_apanic_threads = 1;
-	if (get_trace_buf_size() < (SZ_512K + 1))
-		ftrace_dump(1);
-	show_state_filter(0, SHOW_APP_THREADS);
+	//if (get_trace_buf_size() < (SZ_512K + 1))
+	//	ftrace_dump(1);
+	show_state_filter(0/*, SHOW_APP_THREADS*/);
 	ctx->buf_offset = ALIGN(ctx->written, 512);
 	start_apanic_threads = 0;
 	ctx->written += apanic_write_console_mmc(ctx->buf_offset);
@@ -692,8 +692,8 @@ static void apanic_mmc_logbuf_dump(void)
 	ctx->buf_offset = threads_offset;
 	ctx->written = threads_offset;
 	start_apanic_threads = 1;
-	show_state_filter(0, SHOW_KTHREADS);
-	show_cpu_current_stack_mem();
+	show_state_filter(0/*, SHOW_KTHREADS*/);
+	//show_cpu_current_stack_mem();
 	start_apanic_threads = 0;
 	ctx->buf_offset = ALIGN(ctx->written, 512);
 	ctx->written += apanic_write_console_mmc(ctx->buf_offset);
@@ -805,7 +805,7 @@ static int apanic_mmc(struct notifier_block *this, unsigned long event,
 	add_preempt_count(PREEMPT_ACTIVE);
 #endif
 	touch_softlockup_watchdog();
-	atomic_notifier_call_chain(&touch_watchdog_notifier_head, 0, NULL);
+	//atomic_notifier_call_chain(&touch_watchdog_notifier_head, 0, NULL);
 
 	apanic_mmc_logbuf_dump();
 
