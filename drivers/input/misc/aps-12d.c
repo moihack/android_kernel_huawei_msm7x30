@@ -382,7 +382,7 @@ static void aps_12d_input_light_work_func(struct work_struct *work)
 	if (!data->sensors[APS_12D_SENSOR_LIGHT].enabled)
 		goto work_end;
 
-	usleep(MINIMUM_DELAY_US);
+	msleep(MINIMUM_DELAY_MS);
 
 	adc_count = aps_12d_adc_count(data->client);
 
@@ -413,7 +413,7 @@ static void aps_12d_input_prox_work_func(struct work_struct *work)
 	if (!data->sensors[APS_12D_SENSOR_PROXIMITY].enabled)
 		goto work_end;
 
-	usleep(MINIMUM_DELAY_US);
+	msleep(MINIMUM_DELAY_MS);
 
 	surround_adc = aps_12d_adc_count(data->client);
 
@@ -423,7 +423,7 @@ static void aps_12d_input_prox_work_func(struct work_struct *work)
 	if (!data->sensors[APS_12D_SENSOR_PROXIMITY].enabled)
 		goto work_end;
 
-	usleep(MINIMUM_DELAY_US);
+	msleep(MINIMUM_DELAY_MS);
 
 	proximity_adc = aps_12d_adc_count(data->client);
 
