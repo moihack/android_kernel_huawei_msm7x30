@@ -3535,24 +3535,6 @@ static struct mxt_config_info mxt_config_array[] = {
 	},
 };
 
-int mxt_init_hw(bool on)
-{
-	/* Stub */
-	return 0;
-}
-
-int mxt_power_on(bool on)
-{
-	/* Stub */
-	return 0;
-}
-
-int mxt_lpm_on(bool on)
-{
-	/* Stub */
-	return 0;
-}
-
 static struct mxt_platform_data mxt_platform_data = {
 	.config_array		= mxt_config_array,
 	.config_array_size	= ARRAY_SIZE(mxt_config_array),
@@ -3567,9 +3549,6 @@ static struct mxt_platform_data mxt_platform_data = {
 	.irqflags		= IRQF_TRIGGER_LOW | IRQF_ONESHOT,
 	.reset_gpio		= TS_GPIO_RESET,
 	.irq_gpio		= TS_GPIO_IRQ,
-	.init_hw		= mxt_init_hw,
-	.power_on		= mxt_power_on,
-	.lpm_on			= mxt_lpm_on,
 };
 
 static struct i2c_board_info atmel_mxt_ts = {
