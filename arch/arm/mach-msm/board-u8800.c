@@ -3603,8 +3603,8 @@ static int synaptics_touchpad_gpio_setup(void *gpio_data, bool configure)
 		}
 		msleep(50);
 	} else {
-		pr_warn("%s: No way to deconfigure gpio %d.",
-		       __func__, TS_GPIO_IRQ);
+		gpio_free(TS_GPIO_RESET);
+		gpio_free(TS_GPIO_IRQ);
 	}
 
 	return retval;
