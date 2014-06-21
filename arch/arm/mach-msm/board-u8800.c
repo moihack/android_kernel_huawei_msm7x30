@@ -3562,8 +3562,31 @@ static struct i2c_board_info atmel_mxt_ts = {
 static int synaptics_touchpad_gpio_setup(void *gpio_data, bool configure)
 {
 	int retval = 0;
+	static struct regulator *vcc_ana = NULL;
 
 	if (configure) {
+		vcc_ana = regulator_get(NULL, "gp4");
+		if (IS_ERR(vcc_ana)) {
+			retval = PTR_ERR(vcc_ana);
+			pr_err("%s: Failed to request regulator. Code: %d.",
+				__func__, retval);
+			return retval;
+		}
+
+		retval = regulator_set_voltage(vcc_ana, 2700000, 2700000);
+		if (retval) {
+			pr_err("%s: Failed to set regulator voltage. Code: %d.",
+				__func__, retval);
+			return retval;
+		}
+
+		retval = regulator_enable(vcc_ana);
+		if (retval) {
+			pr_err("%s: Failed to enable regulator. Code: %d.",
+				__func__, retval);
+			return retval;
+		}
+
 		retval = gpio_request(TS_GPIO_IRQ, "rmi4_attn");
 		if (retval) {
 			pr_err("%s: Failed to get attn gpio %d. Code: %d.",
@@ -3605,6 +3628,10 @@ static int synaptics_touchpad_gpio_setup(void *gpio_data, bool configure)
 	} else {
 		gpio_free(TS_GPIO_RESET);
 		gpio_free(TS_GPIO_IRQ);
+		if (vcc_ana) {
+			regulator_disable(vcc_ana);
+			regulator_put(vcc_ana);
+		}
 	}
 
 	return retval;
