@@ -227,12 +227,13 @@ static int aps_12d_power(struct aps_12d_data *data, bool on)
 {
 	int ret = 0;
 
-	if (data->vcc_regulator) {
-		if (on)
-			ret = regulator_enable(data->vcc_regulator);
-		else
-			ret = regulator_disable(data->vcc_regulator);
-	}
+	if (!data->vcc_regulator)
+		return 0;
+
+	if (on)
+		ret = regulator_enable(data->vcc_regulator);
+	else
+		ret = regulator_disable(data->vcc_regulator);
 
 	return ret;
 }
@@ -469,6 +470,11 @@ static int aps_12d_handle_enable(struct aps_12d_data *data,
 set_enable:
 	if (copy_from_user(&enabled, argp, sizeof(enabled)))
 		return -EFAULT;
+
+	/* When a sensor gets enabled, the data->sensors_enabled is not yet
+	 * updated. Update the registry to make sure config is correct. */
+	if (data->sensors_enabled == 0 && enabled)
+		aps_12d_set_settings(data->client, &data->settings);
 
 	switch (cmd) {
 	case APS_IOCTL_SET_LIGHT_ENABLE:
