@@ -17,8 +17,6 @@
  * APS-12D Ambient Light & Proximity Sensor Driver
  */
 
-#define DEBUG 1
-
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/miscdevice.h>
