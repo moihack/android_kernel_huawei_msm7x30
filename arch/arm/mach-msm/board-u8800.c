@@ -1749,6 +1749,50 @@ static struct aps_12d_platform_data aps_12d_pdata = {
 #endif
 
 #ifdef CONFIG_INPUT_LSM303DLH
+static struct regulator *lsm303dlh_reg = NULL;
+
+static int lsm303dlh_init(void)
+{
+	int ret = 0;
+
+	if (lsm303dlh_reg)
+		return 0;
+
+	lsm303dlh_reg = regulator_get(NULL, "gp4");
+	if (IS_ERR(lsm303dlh_reg)) {
+		ret = PTR_ERR(lsm303dlh_reg);
+		pr_err("%s: Failed to request regulator. Code: %d.",
+			__func__, ret);
+		return ret;
+	}
+
+	ret = regulator_set_voltage(lsm303dlh_reg, 2500000, 3300000);
+	if (ret) {
+		ret = PTR_ERR(lsm303dlh_reg);
+		pr_err("%s: Failed to set regulator voltage. Code: %d.",
+			__func__, ret);
+		return ret;
+	}
+
+	return ret;
+}
+
+static void lsm303dlh_exit(void)
+{
+	if (lsm303dlh_reg)
+		regulator_put(lsm303dlh_reg);
+}
+
+static int lsm303dlh_power_on(void)
+{
+	return regulator_enable(lsm303dlh_reg);
+}
+
+static int lsm303dlh_power_off(void)
+{
+	return regulator_disable(lsm303dlh_reg);
+}
+
 static struct lsm303dlh_acc_platform_data lsm303dlh_acc_pdata = {
 	.min_interval = 1,
 	.g_range = LSM303DLH_G_2G,
@@ -1758,6 +1802,10 @@ static struct lsm303dlh_acc_platform_data lsm303dlh_acc_pdata = {
 	.negate_x = 0,
 	.negate_y = 1,
 	.negate_z = 0,
+	.init = lsm303dlh_init,
+	.exit = lsm303dlh_exit,
+	.power_on = lsm303dlh_power_on,
+	.power_off = lsm303dlh_power_off,
 };
 
 static struct lsm303dlh_mag_platform_data lsm303dlh_mag_pdata = {
@@ -1769,6 +1817,10 @@ static struct lsm303dlh_mag_platform_data lsm303dlh_mag_pdata = {
 	.negate_x = 0,
 	.negate_y = 1,
 	.negate_z = 0,
+	.init = lsm303dlh_init,
+	.exit = lsm303dlh_exit,
+	.power_on = lsm303dlh_power_on,
+	.power_off = lsm303dlh_power_off,
 };
 #endif
 
