@@ -66,7 +66,7 @@ struct aps_12d_data {
 /* Global pointer for miscdevice. */
 struct aps_12d_data *_aps_data;
 
-static int aps_12d_read_reg(struct i2c_client *client, u8 reg)
+static int aps_12d_read_reg(struct i2c_client *client, uint8_t reg)
 {
 	int ret;
 
@@ -78,7 +78,8 @@ static int aps_12d_read_reg(struct i2c_client *client, u8 reg)
 	return ret;
 }
 
-static int aps_12d_write_reg(struct i2c_client *client, u8 reg, u8 val)
+static int aps_12d_write_reg(struct i2c_client *client,
+	uint8_t reg, uint8_t val)
 {
 	int ret;
 
@@ -90,16 +91,15 @@ static int aps_12d_write_reg(struct i2c_client *client, u8 reg, u8 val)
 	return ret;
 }
 
-static int aps_12d_8bit_to_12bit(u8 lsb, u8 msb)
+static uint16_t aps_12d_8bit_to_12bit(uint8_t lsb, uint8_t msb)
 {
 	/* Move 8-bit LSB and 4-bit MSB into one. */
-	int adc_count = (msb << 8) | lsb;
-	return adc_count;
+	return (msb << 8) | lsb;
 }
 
 static int aps_12d_adc_count(struct i2c_client *client)
 {
-	u8 lsb, msb;
+	uint8_t lsb, msb;
 	int adc_count;
 
 	/* Read the LSB and MSB registers. */
@@ -159,7 +159,7 @@ static int aps_12d_set_settings(struct i2c_client *client,
 {
 	int ret;
 
-	u8 reg_data = 0;
+	uint8_t reg_data = 0;
 
 	/* Make a config byte. */
 	reg_data |= settings->irdr_current << 6;
@@ -184,7 +184,7 @@ static int _aps_12d_set_state(struct i2c_client *client,
 {
 	int ret;
 
-	u8 reg_data = state << 5;
+	uint8_t reg_data = state << 5;
 
 	ret = aps_12d_write_reg(client, CTRL_CMD1, reg_data);
 
