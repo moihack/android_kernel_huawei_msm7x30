@@ -126,27 +126,27 @@ static void aps_12d_set_defaults(struct aps_12d_data *data)
 	const struct aps_12d_platform_data *pdata = data->pdata;
 	struct aps_12d_settings *settings = &data->settings;
 
-	if (pdata->range)
+	if (pdata->range < 0)
 		settings->range = pdata->range;
 	else
 		settings->range = APS_12D_RANGE_0P24_TO_1000;
 
-	if (pdata->irdr_current)
+	if (pdata->irdr_current < 0)
 		settings->irdr_current = pdata->irdr_current;
 	else
 		settings->irdr_current = APS_12D_IRDR_50;
 
-	if (pdata->mod_freq)
+	if (pdata->mod_freq < 0)
 		settings->mod_freq = pdata->mod_freq;
 	else
 		settings->mod_freq = APS_12D_MOD_FREQ_DC;
 
-	if (pdata->resolution)
+	if (pdata->resolution < 0)
 		settings->resolution = pdata->resolution;
 	else
 		settings->resolution = APS_12D_RES_12;
 
-	if (pdata->allow_reconfig)
+	if (pdata->allow_reconfig < 0)
 		settings->allow_reconfig = pdata->allow_reconfig;
 	else
 		settings->allow_reconfig = false;
