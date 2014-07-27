@@ -85,6 +85,7 @@
 #include <linux/input/aps-12d.h>
 #include <linux/input/lsm303dlh.h>
 #include <sound/tpa2028d1.h>
+#include <linux/huawei_battery.h>
 
 
 #ifdef CONFIG_FB_MSM_TRIPLE_BUFFER
@@ -606,6 +607,14 @@ static int config_camera_power_on(void)
 		goto error_free_reg;
 	}
 
+#ifdef CONFIG_BATTERY_HUAWEI
+	{
+		union huawei_bat_state state;
+		state.on = true;
+		huawei_bat_notify(HW_BAT_CONSUMER_BACK_CAMERA, state);
+	}
+#endif
+
 	return 0;
 
 error_free_reg:
@@ -621,6 +630,14 @@ static void config_camera_power_off(void)
 		camera_power_regs);
 	regulator_bulk_free(ARRAY_SIZE(camera_power_regs),
 		camera_power_regs);
+
+#ifdef CONFIG_BATTERY_HUAWEI
+	{
+		union huawei_bat_state state;
+		state.on = false;
+		huawei_bat_notify(HW_BAT_CONSUMER_CAMERA, state);
+	}
+#endif
 }
 
 struct resource msm_camera_resources[] = {
@@ -781,6 +798,13 @@ void msm_snddev_poweramp_on(void)
 	if (tpa2028d1_cb)
 		tpa2028d1_cb->enable(tpa2028d1_cb, true);
 #endif
+#ifdef CONFIG_BATTERY_HUAWEI
+	{
+		union huawei_bat_state state;
+		state.on = true;
+		huawei_bat_notify(HW_BAT_CONSUMER_SPEAKER, state);
+	}
+#endif
 }
 
 void msm_snddev_poweramp_off(void)
@@ -789,6 +813,13 @@ void msm_snddev_poweramp_off(void)
 #ifdef CONFIG_SND_SOC_TPA2028D1
 	if (tpa2028d1_cb)
 		tpa2028d1_cb->enable(tpa2028d1_cb, false);
+#endif
+#ifdef CONFIG_BATTERY_HUAWEI
+	{
+		union huawei_bat_state state;
+		state.on = false;
+		huawei_bat_notify(HW_BAT_CONSUMER_SPEAKER, state);
+	}
 #endif
 }
 
@@ -2859,6 +2890,13 @@ static struct platform_device msm_adc_device = {
 	},
 };
 
+#ifdef CONFIG_BATTERY_HUAWEI
+static struct platform_device huawei_bat_device = {
+	.name = "huawei_battery",
+	.id = -1,
+};
+#endif
+
 static struct platform_device *devices[] __initdata = {
 #if defined(CONFIG_SERIAL_MSM) || defined(CONFIG_MSM_SERIAL_DEBUGGER)
 	&msm_device_uart2,
@@ -2950,6 +2988,9 @@ static struct platform_device *devices[] __initdata = {
 	&msm_adsp_device,
 #ifdef CONFIG_ION_MSM
 	&ion_dev,
+#endif
+#ifdef CONFIG_BATTERY_HUAWEI
+	&huawei_bat_device,
 #endif
 };
 
