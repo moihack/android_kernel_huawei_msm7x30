@@ -2267,7 +2267,6 @@ static struct platform_device mddi_nt35582_wvga_device = {
 
 static int display_power(int on)
 {
-	batt_notify_consumer(CONSUMER_LCD_DISPLAY, on);
 	return 0;
 }
 
@@ -2860,14 +2859,6 @@ static struct platform_device msm_adc_device = {
 	},
 };
 
-static struct platform_device voltage_bat_device = {
-	.name = "voltage_battery",
-	.id = -1,
-	.dev = {
-		.platform_data = &voltage_bat_pdata,
-	},
-};
-
 static struct platform_device *devices[] __initdata = {
 #if defined(CONFIG_SERIAL_MSM) || defined(CONFIG_MSM_SERIAL_DEBUGGER)
 	&msm_device_uart2,
@@ -2960,7 +2951,6 @@ static struct platform_device *devices[] __initdata = {
 #ifdef CONFIG_ION_MSM
 	&ion_dev,
 #endif
-	&voltage_bat_device,
 };
 
 static struct msm_gpio msm_i2c_gpios_hw[] = {

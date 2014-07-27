@@ -21,10 +21,8 @@
 #include <linux/wakelock.h>
 #include <mach/msm_hsusb.h>
 #include <mach/msm_rpcrouter.h>
-#include <linux/power/voltage_battery.h>
 
 #include "board-u8800.h"
-#include "board-u8800-battery.h"
 
 #define BATTERY_LOW_UVOLTS	3400000
 #define BATTERY_HIGH_UVOLTS	4200000
@@ -201,36 +199,6 @@ static int batt_get_temperature(void)
 	return rpc_get_information(RPC_BATTERY_TEMP) * 10;
 }
 
-static int chg_source;
-
-static struct voltage_battery_callbacks *voltage_bat_cb = NULL;
-static void voltage_bat_register_callbacks(
-	struct voltage_battery_callbacks *callbacks)
-{
-	voltage_bat_cb = callbacks;
-}
-static void voltage_bat_unregister_callbacks(void)
-{
-	voltage_bat_cb = NULL;
-}
-
-static uint32_t voltage_bat_get_voltage(void)
-{
-	return batt_get_voltage();
-}
-
-struct voltage_battery_platform_data voltage_bat_pdata = {
-	.voltage_low = 3400000,
-	.voltage_high = 4200000,
-	.discharge_map = voltage_bat_dis_map,
-	.discharge_map_size = ARRAY_SIZE(voltage_bat_dis_map),
-	.charge_map = voltage_bat_chg_map,
-	.charge_map_size = ARRAY_SIZE(voltage_bat_chg_map),
-	.register_callbacks = voltage_bat_register_callbacks,
-	.unregister_callbacks = voltage_bat_unregister_callbacks,
-	.get_voltage = voltage_bat_get_voltage,
-};
-
 static int batt_get_capacity(void)
 {
 	int rc;
@@ -247,19 +215,16 @@ static int batt_get_capacity(void)
 	rc = msm_rpc_call_reply(chg_ep, ONCRPC_CHG_GET_CAPACITY_PROC,
 		&req, sizeof(req), &rep, sizeof(rep), msecs_to_jiffies(1000));
 	if (rc < 0)
-		goto voltage_based;
+		goto error;
 
 	capacity = be32_to_cpu(rep.battery_level);
 	if (capacity > 100 || capacity < 0) /* Error checking. */
-		goto voltage_based;
+		goto error;
 
 	return capacity;
 
-voltage_based:
-	if (voltage_bat_cb)
-		capacity = voltage_bat_cb->get_capacity(voltage_bat_cb);
-	else
-		capacity = 50; /* Dummy. */
+error:
+	capacity = 50; /* Dummy. */
 
 	return capacity;
 }
@@ -284,6 +249,7 @@ static void bq24152_set_mode(enum bq2415x_mode mode)
 	set_mode = mode;
 }
 
+static int chg_source;
 void batt_chg_connected(enum chg_type chg_type)
 {
 	int new_chg_source;
@@ -300,9 +266,6 @@ void batt_chg_connected(enum chg_type chg_type)
 		new_chg_source = CHARGE_SOURCE_NONE;
 		break;
 	}
-
-	voltage_bat_cb->set_charging(voltage_bat_cb,
-		(new_chg_source != CHARGE_SOURCE_NONE));
 
 	if (android_bat_cb)
 		android_bat_cb->charge_source_changed(android_bat_cb, new_chg_source);
@@ -326,15 +289,6 @@ void batt_vbus_draw(unsigned ma)
 {
 	if (bq24152_callbacks)
 		bq24152_callbacks->set_current_limit(bq24152_callbacks, ma);
-}
-
-static bool batt_consumers[CONSUMER_MAX];
-void batt_notify_consumer(enum batt_consumer_type type, bool on)
-{
-	batt_consumers[type] = on;
-	if (voltage_bat_cb)
-		voltage_bat_cb->unreliable_update(voltage_bat_cb,
-			batt_consumers[CONSUMER_LCD_DISPLAY]);
 }
 
 static void android_bat_register_callbacks(

@@ -29,14 +29,4 @@ void batt_vbus_draw(unsigned ma);
 
 extern struct i2c_board_info bq24152_device;
 
-/* Items having the biggest impact on battery voltage. */
-enum batt_consumer_type {
-	CONSUMER_LCD_DISPLAY,
-	CONSUMER_USB_CHARGER,
-	CONSUMER_MAX
-};
-void batt_notify_consumer(enum batt_consumer_type type, bool on);
-
-extern struct voltage_battery_platform_data voltage_bat_pdata;
-
 #endif
