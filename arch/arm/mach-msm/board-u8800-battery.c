@@ -11,10 +11,8 @@
  *
  */
 
-#include <linux/delay.h>
 #include <linux/err.h>
 #include <linux/i2c.h>
-#include <linux/msm_adc.h>
 #include <linux/platform_device.h>
 #include <linux/platform_data/android_battery.h>
 #include <linux/power/bq2415x_charger.h>
@@ -33,25 +31,12 @@
 
 #define ONCRPC_CHG_GET_CAPACITY_PROC		19
 
-#define VBAT_ADC_CHANNEL 1
-
 /* The modem may be busy, let's ask for new information and wait for 5 seconds
  * before asking for new info. */
 #define CHG_RPC_PULL_INTERVAL_NS		5000000000
 
 static struct wake_lock charger_wakelock;
 static struct msm_rpc_endpoint *chg_ep;
-
-static int batt_read_adc(int32_t channel, int32_t *reading)
-{
-	int ret = 0;
-	struct adc_chan_result chan_result;
-
-	ret = adc_rpc_read_result(channel, &chan_result);
-	if (!ret)
-		*reading = chan_result.physical;
-	return ret;
-}
 
 enum rpc_information_type {
 	RPC_CHARGER_STATUS,
@@ -163,35 +148,9 @@ static int rpc_initialize(bool init)
 	return 0;
 }
 
-#define VBAT_SAMPLES		2
-#define VBAT_MAX_DIFF_MV	50
-
-#define VBAT_OFFSET		42
-
 static int batt_get_voltage(void)
 {
-	int32_t voltage[VBAT_SAMPLES] = {0};
-	int32_t final_result = 0;
-	int i;
-
-restart:
-	/* Do VBAT_SAMPLES samples & restart the process if voltage is wrong.
-	 * This can happen due to HWMON having a faulty read. */
-	for (i = 0; i < VBAT_SAMPLES; i++) {
-		batt_read_adc(VBAT_ADC_CHANNEL, &voltage[i]);
-		voltage[i] += VBAT_OFFSET;
-
-		if (i != 0) {
-			if (abs(voltage[i] - voltage[i-1]) > VBAT_MAX_DIFF_MV)
-				goto restart;
-		}
-
-		msleep(50);
-	}
-
-	final_result = voltage[0];
-
-	return final_result * 1000;
+	return rpc_get_information(RPC_BATTERY_VOLTAGE) * 1000;
 }
 
 static int batt_get_temperature(void)
