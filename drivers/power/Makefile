@@ -62,3 +62,4 @@ obj-$(CONFIG_BATTERY_BCL)	+= battery_current_limit.o
 obj-$(CONFIG_CHARGER_BQ2415X)	+= bq2415x_charger.o
 obj-$(CONFIG_BATTERY_ANDROID)	+= android_battery.o
 obj-$(CONFIG_BATTERY_VOLTAGE)	+= voltage_battery.o
+obj-$(CONFIG_BATTERY_HUAWEI)	+= huawei_battery.o

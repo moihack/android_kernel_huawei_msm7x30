@@ -469,4 +469,11 @@ config BATTERY_VOLTAGE
 	  Say Y to enable battery capacity measurements using closed-circuit
 	  voltage.
 
+config BATTERY_HUAWEI
+	bool "Huawei Battery"
+	depends on ARCH_MSM
+	help
+	  Say Y to enable current consumer events & battery capacity
+	  measurements from modem.
+
 endif # POWER_SUPPLY
