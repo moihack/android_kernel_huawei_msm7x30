@@ -3683,6 +3683,12 @@ static struct rmi_f11_sensor_data synaptics_f11_sensor_data = {
 	},
 };
 
+static int synaptics_pre_resume(const void *pm_data)
+{
+	msleep(50);
+	return 0;
+}
+
 static struct rmi_device_platform_data synaptics_platform_data = {
 	.sensor_name = "TM1564",
 	.attn_gpio = TS_GPIO_IRQ,
@@ -3691,6 +3697,7 @@ static struct rmi_device_platform_data synaptics_platform_data = {
 	.gpio_config = synaptics_touchpad_gpio_setup,
 	.reset_delay_ms = 100,
 	.f11_sensor_data = &synaptics_f11_sensor_data,
+	.pre_resume = synaptics_pre_resume,
 };
 
 static struct i2c_board_info synaptics_ts = {
