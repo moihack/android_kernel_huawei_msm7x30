@@ -4005,9 +4005,7 @@ static struct memtype_reserve msm7x30_reserve_table[] __initdata = {
 
 static void __init size_pmem_devices(void)
 {
-#ifdef CONFIG_ANDROID_PMEM_ADSP
 	android_pmem_adsp_pdata.size = MSM_PMEM_ADSP_SIZE;
-#endif
 }
 
 static void __init reserve_mdp_memory(void)
