@@ -1195,7 +1195,7 @@ static int bahama_present(void)
 	}
 }
 
-struct regulator *fm_regulator;
+static struct regulator *fm_regulator;
 static int fm_radio_setup(struct marimba_fm_platform_data *pdata)
 {
 	int rc, voltage;
@@ -1526,21 +1526,21 @@ static struct platform_device msm_aux_pcm_device = {
 	.resource       = msm_aux_pcm_resources,
 };
 
-struct platform_device msm_aictl_device = {
+static struct platform_device msm_aictl_device = {
 	.name = "audio_interct",
 	.id   = 0,
 	.num_resources = ARRAY_SIZE(msm_aictl_resources),
 	.resource = msm_aictl_resources,
 };
 
-struct platform_device msm_mi2s_device = {
+static struct platform_device msm_mi2s_device = {
 	.name = "mi2s",
 	.id   = 0,
 	.num_resources = ARRAY_SIZE(msm_mi2s_resources),
 	.resource = msm_mi2s_resources,
 };
 
-struct platform_device msm_lpa_device = {
+static struct platform_device msm_lpa_device = {
 	.name = "lpa",
 	.id   = 0,
 	.num_resources = ARRAY_SIZE(msm_lpa_resources),
@@ -3936,7 +3936,7 @@ static struct platform_device ion_mm_heap_device = {
  * These heaps are listed in the order they will be allocated.
  * Don't swap the order unless you know what you are doing!
  */
-struct ion_platform_heap msm7x30_heaps[] = {
+static struct ion_platform_heap msm7x30_heaps[] = {
 		{
 			.id	= ION_SYSTEM_HEAP_ID,
 			.type	= ION_HEAP_TYPE_SYSTEM,
