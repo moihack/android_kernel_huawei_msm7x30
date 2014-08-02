@@ -22,10 +22,11 @@
 
 /* 12-bit ADC value. */
 #define APS_12D_MAX_VALUE	4095
-/* APS-12D has a minimum delay of 52.5ms. */
-#define MINIMUM_DELAY_NS	52500000
+/* APS-12D has a minimum delay of 52.5ms.
+ * Increase the delay to 53ms to be safe. */
+#define MINIMUM_DELAY_NS	53000000
 #define MINIMUM_DELAY_US	(MINIMUM_DELAY_NS / 1000)
-#define MINIMUM_DELAY_MS	((MINIMUM_DELAY_US / 1000) + 1)
+#define MINIMUM_DELAY_MS	(MINIMUM_DELAY_US / 1000)
 /* The minimum theshold between CONT to ONCE is 1 second. */
 #define ONCE_THRESHOLD_NS	1000000000
 
