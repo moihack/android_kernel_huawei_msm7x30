@@ -105,11 +105,9 @@
 
 #define MSM_FB_SIZE roundup(MSM_FB_PRIM_BUF_SIZE + MSM_FB_EXT_BUF_SIZE, 4096)
 
-#define MSM_PMEM_ADSP_SIZE	0x1800000
-
 #ifdef CONFIG_ION_MSM
 static struct platform_device ion_dev;
-#define MSM_ION_MM_SIZE		0x1B00000
+#define MSM_ION_MM_SIZE		0x3300000
 #define MSM_ION_AUDIO_SIZE	0x200000
 #define MSM_ION_SF_SIZE		0x1700000
 #define MSM_ION_WB_SIZE		MSM_FB_OVERLAY0_WRITEBACK_SIZE
@@ -2113,21 +2111,9 @@ static struct platform_device msm_migrate_pages_device = {
 
 static u64 msm_dmamask = DMA_BIT_MASK(32);
 
-static struct platform_device pmem_adsp_heap_device = {
-	.name = "pmem-adsp-heap-device",
-	.id = -1,
-	.dev = {
-		.dma_mask = &msm_dmamask,
-		.coherent_dma_mask = DMA_BIT_MASK(32),
-	}
-};
-
 static struct android_pmem_platform_data android_pmem_adsp_pdata = {
 	.name = "pmem_adsp",
-	.allocator_type = PMEM_ALLOCATORTYPE_DMA,
-	.cached = 0,
-	.memory_type = MEMTYPE_EBI0,
-	.private_data = &pmem_adsp_heap_device.dev,
+	.ion_heap_id = ION_CP_MM_HEAP_ID,
 };
 
 static struct platform_device android_pmem_adsp_device = {
@@ -4003,11 +3989,6 @@ static struct memtype_reserve msm7x30_reserve_table[] __initdata = {
 	},
 };
 
-static void __init size_pmem_devices(void)
-{
-	android_pmem_adsp_pdata.size = MSM_PMEM_ADSP_SIZE;
-}
-
 static void __init reserve_mdp_memory(void)
 {
 	mdp_pdata.ov0_wb_size = MSM_FB_OVERLAY0_WRITEBACK_SIZE;
@@ -4034,7 +4015,6 @@ static void __init reserve_ion_memory(void)
 
 static void __init msm7x30_calculate_reserve_sizes(void)
 {
-	size_pmem_devices();
 	reserve_mdp_memory();
 	size_ion_devices();
 	reserve_ion_memory();
@@ -4063,11 +4043,6 @@ static void __init msm7x30_reserve(void)
 	dma_declare_contiguous(
 			&ion_mm_heap_device.dev,
 			MSM_ION_MM_SIZE,
-			0x0,
-			0x20000000);
-	dma_declare_contiguous(
-			&pmem_adsp_heap_device.dev,
-			MSM_PMEM_ADSP_SIZE,
 			0x0,
 			0x20000000);
 #endif
