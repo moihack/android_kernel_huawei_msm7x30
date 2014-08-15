@@ -57,8 +57,6 @@
 #include <asm/mach/mmc.h>
 #include <mach/vreg.h>
 #include <linux/platform_data/qcom_crypto_device.h>
-#include <linux/apanic_mmc.h>
-#include <linux/msm_sdcc_raw.h>
 
 #include "devices.h"
 #include "timer.h"
@@ -3810,8 +3808,6 @@ static void hwid_init(void)
 static void __init msm7x30_init(void)
 {
 	unsigned smem_size;
-
-	msm_init_apanic();
 
 	msm_clock_init(&msm7x30_clock_init_data);
 #ifdef CONFIG_SERIAL_MSM_CONSOLE
