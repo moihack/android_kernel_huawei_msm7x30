@@ -416,7 +416,7 @@ static int tpa2028d1_write_config(struct tpa2028d1_data *data)
 
 	/* REG_IC_FUNC_CONTROL */
 	val |= (0x1 << IC_EN_BIT) & BIT(IC_EN_BIT);
-	val |= (config->ng_enabled << IC_NG_BIT) & AGC1_NG_MASK;
+	val |= (config->ng_enabled << IC_NG_BIT) & BIT(IC_NG_BIT);
 	ret = tpa2028d1_write(data->client, REG_IC_FUNC_CONTROL, val);
 	if (ret)
 		goto err;
