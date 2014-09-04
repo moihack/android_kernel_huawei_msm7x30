@@ -249,7 +249,7 @@ static struct platform_device msm_ifmradio_handset_device = {
 
 
 static struct adie_codec_action_unit ispeaker_rx_48KHz_osr256_actions[] =
-	SPEAKER_RX_48000_OSR_256;
+	SPEAKER_MUSIC_MONO_RX_48000_OSR_256;
 
 static struct adie_codec_hwsetting_entry ispeaker_rx_settings[] = {
 	{
@@ -270,7 +270,7 @@ static struct snddev_icodec_data snddev_ispeaker_rx_data = {
 	.capability = (SNDDEV_CAP_RX | SNDDEV_CAP_VOICE),
 	.name = "speaker_mono_rx",
 	.copp_id = 0,
-	.acdb_id = ACDB_ID_SPKR_PHONE_MONO,
+	.acdb_id = ACDB_ID_SPKR_PHONE_MUSIC_MONO,
 	.profile = &ispeaker_rx_profile,
 	.channel_mode = 1,
 	.pmctl_id = NULL,
@@ -278,10 +278,10 @@ static struct snddev_icodec_data snddev_ispeaker_rx_data = {
 	.default_sample_rate = 48000,
 	.pamp_on = &msm_snddev_poweramp_on,
 	.pamp_off = &msm_snddev_poweramp_off,
-	.max_voice_rx_vol[VOC_NB_INDEX] = 0,
-	.min_voice_rx_vol[VOC_NB_INDEX] = -1500,
-	.max_voice_rx_vol[VOC_WB_INDEX] = 0,
-	.min_voice_rx_vol[VOC_WB_INDEX] = -1500,
+	.max_voice_rx_vol[VOC_NB_INDEX] = 200,
+	.min_voice_rx_vol[VOC_NB_INDEX] = -1300,
+	.max_voice_rx_vol[VOC_WB_INDEX] = 200,
+	.min_voice_rx_vol[VOC_WB_INDEX] = -1300,
 };
 
 static struct platform_device msm_ispeaker_rx_device = {
